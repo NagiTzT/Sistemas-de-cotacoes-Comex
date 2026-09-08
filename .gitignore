@@ -1,0 +1,18 @@
+bin/
+obj/
+.vs/
+.vscode/
+*.user
+*.suo
+*.cache
+*.log
+
+# Dados locais e credenciais de desenvolvimento
+App_Data/*.json
+appsettings.Local.json
+.env
+.env.*
+
+# Artefatos de publicação
+publish/
+artifacts/

@@ -1,0 +1,12 @@
+<input type="date" value="@Value.ToString("yyyy-MM-dd")" @onchange="Atualizar" lang="pt-BR" />
+
+@code {
+    [Parameter] public DateOnly Value { get; set; }
+    [Parameter] public EventCallback<DateOnly> ValueChanged { get; set; }
+
+    private async Task Atualizar(ChangeEventArgs evento)
+    {
+        if (DateOnly.TryParseExact(evento.Value?.ToString(), "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var data))
+            await ValueChanged.InvokeAsync(data);
+    }
+}

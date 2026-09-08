@@ -1,0 +1,29 @@
+<input value="@_texto" @oninput="Atualizar" inputmode="decimal" placeholder="@Placeholder" />
+
+@code {
+    [Parameter] public decimal Value { get; set; }
+    [Parameter] public EventCallback<decimal> ValueChanged { get; set; }
+    [Parameter] public string Placeholder { get; set; } = "0,00";
+
+    private string _texto = string.Empty;
+    private decimal _ultimoValor;
+    private bool _inicializado;
+    private static readonly CultureInfo Cultura = CultureInfo.GetCultureInfo("pt-BR");
+
+    protected override void OnParametersSet()
+    {
+        if (_inicializado && Value == _ultimoValor) return;
+        _ultimoValor = Value;
+        _texto = Value == 0 ? string.Empty : Value.ToString("0.####", Cultura);
+        _inicializado = true;
+    }
+
+    private async Task Atualizar(ChangeEventArgs evento)
+    {
+        _texto = evento.Value?.ToString()?.Trim() ?? string.Empty;
+        var normalizado = _texto.Replace('.', ',');
+        var valido = decimal.TryParse(normalizado, NumberStyles.Number, Cultura, out var valor);
+        _ultimoValor = valido ? valor : 0;
+        await ValueChanged.InvokeAsync(_ultimoValor);
+    }
+}

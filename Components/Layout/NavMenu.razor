@@ -1,0 +1,9 @@
+<a class="brand" href="/"><span class="brand-mark">C</span><strong class="nav-label">Cotações</strong></a>
+<nav>
+    <NavLink class="nav-item" href="" Match="NavLinkMatch.All"><span>⌂</span><span class="nav-label">Visão Geral</span></NavLink>
+    <NavLink class="nav-item" href="cotacoes" Match="NavLinkMatch.All"><span>▤</span><span class="nav-label">Minhas Cotações</span></NavLink>
+    <NavLink class="nav-item" href="historico" Match="NavLinkMatch.All"><span>◷</span><span class="nav-label">Histórico de Cotações</span></NavLink>
+    <NavLink class="nav-item" href="cotacoes/nova" Match="NavLinkMatch.All"><span>＋</span><span class="nav-label">Nova Cotação</span></NavLink>
+    <AuthorizeView Roles="Administrador"><NavLink class="nav-item" href="administracao/usuarios"><span>♙</span><span class="nav-label">Usuários</span></NavLink></AuthorizeView>
+</nav>
+<form class="sign-out" method="post" action="/auth/logout"><button type="submit"><span>↪</span><span class="nav-label">Sair</span></button></form>

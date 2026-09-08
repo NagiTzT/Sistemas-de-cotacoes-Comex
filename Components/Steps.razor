@@ -1,0 +1,2 @@
+<div class="steps">@for(var i=0;i<Labels.Length;i++){var n=i;<button type="button" class="step @(Current==i?"current":Current>i?"done":"")" @onclick="()=>OnChange.InvokeAsync(n)"><span class="step-icon">@(i+1)</span><span>@Labels[i]</span></button>}</div>
+@code { static readonly string[] Labels=["Dados da Cotação","Modelos e Itens","Custos e Impostos","Prévia","Finalizar"]; [Parameter] public int Current{get;set;} [Parameter] public EventCallback<int> OnChange{get;set;} }

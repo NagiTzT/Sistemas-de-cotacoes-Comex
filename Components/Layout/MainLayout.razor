@@ -1,0 +1,25 @@
+@inherits LayoutComponentBase
+
+<div class="app-shell">
+    <input class="sidebar-checkbox" id="sidebar-checkbox" type="checkbox" />
+    <aside class="sidebar"><NavMenu /></aside>
+    <main class="main-content">
+        <header class="header">
+            <div class="header-title">
+                <label class="sidebar-toggle" for="sidebar-checkbox" title="Recolher ou expandir menu">☰</label>
+                <div><h1>Sistema de Cotações</h1><p>Gerencie cotações de importação com agilidade e precisão.</p></div>
+            </div>
+            <AuthorizeView><Authorized Context="auth"><div class="user"><span class="avatar">@Iniciais(auth.User.Identity?.Name)</span><span>@auth.User.Identity?.Name</span></div></Authorized></AuthorizeView>
+        </header>
+        @Body
+    </main>
+</div>
+<div id="blazor-error-ui">Ocorreu um erro.<a href="" class="reload">Recarregar</a><a class="dismiss">×</a></div>
+
+@code {
+    private static string Iniciais(string? nome)
+    {
+        var partes = (nome ?? "U").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return string.Concat(partes.Take(2).Select(x => char.ToUpperInvariant(x[0])));
+    }
+}

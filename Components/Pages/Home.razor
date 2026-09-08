@@ -1,0 +1,33 @@
+@page "/"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject CotacaoService Service
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<PageTitle>Visão Geral</PageTitle>
+<section class="page-content">
+    <div class="page-actions"><a class="button primary" href="cotacoes/nova">＋ Nova Cotação</a></div>
+    <div class="kpi-grid compact">
+        <Kpi Icon="▣" Tone="green" Label="Qtde Enviada" Value="@Enviadas.ToString()" Detail="Cotações enviadas" />
+        <Kpi Icon="♙" Tone="amber" Label="Qtde Ativa" Value="@Ativas.ToString()" Detail="Cotações em andamento" />
+        <Kpi Icon="⌁" Tone="orange" Label="% de Conversão" Value="@($"{Conversao:N0}%")" Detail="Conversão do mês" />
+    </div>
+    <section class="table-card">
+        <div class="table-title"><div><h2>Cotações Recentes</h2><p>Consulte e filtre as suas últimas propostas.</p></div><a class="text-button" href="historico">Ver histórico completo</a></div>
+        <CotacoesComFiltros Cotacoes="Lista" MaxResults="8" />
+    </section>
+</section>
+
+@code {
+    private IReadOnlyList<Cotacao> Lista = [];
+    private int Enviadas => Lista.Count(x => x.Status is not StatusCotacao.EmPreenchimento);
+    private int Ativas => Lista.Count(x => x.Status is StatusCotacao.EmAnalise or StatusCotacao.AguardandoCliente);
+    private decimal Conversao => Enviadas == 0 ? 0 : (decimal)Lista.Count(x => x.Status == StatusCotacao.Aprovada) / Enviadas * 100;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var valor = auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        Lista = Service.ListarDoUsuario(Guid.TryParse(valor, out var id) ? id : null);
+    }
+}

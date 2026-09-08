@@ -1,0 +1,34 @@
+@page "/login"
+@layout Layout.LoginLayout
+@attribute [AllowAnonymous]
+
+<PageTitle>Entrar</PageTitle>
+
+<section class="login-page">
+    <div class="login-brand"><span class="brand-mark">C</span><strong>Cotações</strong></div>
+    <div class="login-card">
+        <div class="login-heading">
+            <span class="login-kicker">Acesso ao sistema</span>
+            <h1>Bem-vindo</h1>
+            <p>Entre com seu usuário e senha para gerenciar as cotações.</p>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(Erro))
+        {
+            <div class="alert error">Usuário ou senha inválidos.</div>
+        }
+        <form method="post" action="/auth/login" class="login-form">
+            <input type="hidden" name="returnUrl" value="@ReturnUrlSeguro" />
+            <label class="field"><span>E-mail</span><input name="login" type="email" autocomplete="username" required autofocus placeholder="Digite seu e-mail" /></label>
+            <label class="field"><span>Senha</span><input name="senha" type="password" autocomplete="current-password" required placeholder="Digite sua senha" /></label>
+            <button class="button primary login-button" type="submit">Entrar</button>
+        </form>
+    </div>
+    <p class="login-footer">Full Brands · Sistema de Cotações</p>
+</section>
+
+@code {
+    [SupplyParameterFromQuery] public string? Erro { get; set; }
+    [SupplyParameterFromQuery] public string? ReturnUrl { get; set; }
+    private string ReturnUrlSeguro =>
+        !string.IsNullOrWhiteSpace(ReturnUrl) && ReturnUrl.StartsWith('/') && !ReturnUrl.StartsWith("//") ? ReturnUrl : "/";
+}

@@ -1,0 +1,13 @@
+<section class="tax-item-card">
+    <div class="tax-item-heading"><div><strong>@Modelo.Nome</strong><span>@Modelo.Item.Descricao</span></div><span class="ncm-badge">NCM @Modelo.Item.Ncm</span></div>
+    <div class="form-grid costs-grid">
+        <Field Label="Imposto de Importação (%)"><DecimalInput @bind-Value="Modelo.Item.Impostos.ImpostoImportacaoPercentual" /></Field>
+        <Field Label="IPI (%)"><DecimalInput @bind-Value="Modelo.Item.Impostos.IpiPercentual" /></Field>
+        <Field Label="PIS (%)"><DecimalInput @bind-Value="Modelo.Item.Impostos.PisPercentual" /></Field>
+        <Field Label="COFINS (%)"><DecimalInput @bind-Value="Modelo.Item.Impostos.CofinsPercentual" /></Field>
+        <Field Label="ICMS (%)"><DecimalInput @bind-Value="Modelo.Item.Impostos.IcmsPercentual" /></Field>
+        <div class="tax-total"><span>Total de alíquotas</span><strong>@Modelo.Item.Impostos.TotalPercentual.ToString("N2")%</strong></div>
+    </div>
+</section>
+
+@code { [Parameter, EditorRequired] public ModeloCotacao Modelo { get; set; } = default!; }

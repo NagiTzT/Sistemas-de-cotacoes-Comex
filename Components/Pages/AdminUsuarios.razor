@@ -1,0 +1,58 @@
+@page "/administracao/usuarios"
+@attribute [Authorize(Roles = PerfisUsuario.Administrador)]
+@rendermode InteractiveServer
+@inject UsuarioService Service
+
+<PageTitle>Usuários</PageTitle>
+
+<section class="page-content users-page">
+    <div class="toolbar"><div><h2>Usuários e acessos</h2><p>Cadastre as pessoas que poderão acessar o sistema.</p></div></div>
+    <div class="users-layout">
+        <section class="form-card user-form-card">
+            <div class="section-heading"><h2>Novo usuário</h2><p>A senha é armazenada de forma protegida e não poderá ser visualizada depois.</p></div>
+            @if (!string.IsNullOrWhiteSpace(Mensagem))
+            {
+                <div class="alert @(Sucesso ? "success" : "error")">@Mensagem</div>
+            }
+            <div class="user-form">
+                <Field Label="Nome completo *"><input @bind="Nome" @bind:event="oninput" placeholder="Nome da pessoa" /></Field>
+                <Field Label="E-mail *"><input @bind="Login" @bind:event="oninput" type="email" autocomplete="off" placeholder="Ex.: maria@empresa.com" /></Field>
+                <Field Label="Senha inicial *"><input @bind="Senha" @bind:event="oninput" type="password" autocomplete="new-password" placeholder="Mínimo de 8 caracteres" /></Field>
+                <Field Label="Perfil de acesso *"><select @bind="Perfil">@foreach (var perfil in PerfisUsuario.Todos) { <option value="@perfil">@perfil</option> }</select></Field>
+                <button class="button primary" type="button" @onclick="Cadastrar">＋ Cadastrar usuário</button>
+            </div>
+        </section>
+        <section class="table-card users-table-card">
+            <div class="table-title"><div><h2>Usuários cadastrados</h2><p>@Usuarios.Count usuário(s) com acesso configurado.</p></div></div>
+            <div class="table-wrap"><table><thead><tr><th>Nome</th><th>Usuário</th><th>Perfil</th><th>Status</th></tr></thead><tbody>
+                @foreach (var usuario in Usuarios)
+                {
+                    <tr><td><strong>@usuario.Nome</strong></td><td>@usuario.Login</td><td><span class="role-badge">@usuario.Perfil</span></td><td><span class="status @(usuario.Ativo ? "active-user" : "inactive-user")">@(usuario.Ativo ? "Ativo" : "Inativo")</span></td></tr>
+                }
+            </tbody></table></div>
+        </section>
+    </div>
+</section>
+
+@code {
+    private string Nome = "";
+    private string Login = "";
+    private string Senha = "";
+    private string Perfil = PerfisUsuario.Comercial;
+    private string Mensagem = "";
+    private bool Sucesso;
+    private IReadOnlyList<UsuarioResumo> Usuarios = [];
+
+    protected override void OnInitialized() => AtualizarLista();
+
+    private async Task Cadastrar()
+    {
+        (Sucesso, Mensagem) = await Service.CadastrarAsync(Nome, Login, Senha, Perfil);
+        if (!Sucesso) return;
+        Nome = Login = Senha = "";
+        Perfil = PerfisUsuario.Comercial;
+        AtualizarLista();
+    }
+
+    private void AtualizarLista() => Usuarios = Service.Listar();
+}

@@ -1,0 +1,22 @@
+@page "/cotacoes"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject CotacaoService Service
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<PageTitle>Minhas Cotações</PageTitle>
+<section class="page-content">
+    <div class="toolbar"><div><h2>Minhas Cotações</h2><p>Consulte e acompanhe as propostas criadas por você.</p></div><a class="button primary" href="cotacoes/nova">＋ Nova Cotação</a></div>
+    <section class="table-card list-card"><CotacoesComFiltros Cotacoes="Cotacoes" /></section>
+</section>
+
+@code {
+    private IReadOnlyList<Cotacao> Cotacoes = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var valor = auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        Cotacoes = Service.ListarDoUsuario(Guid.TryParse(valor, out var id) ? id : null);
+    }
+}

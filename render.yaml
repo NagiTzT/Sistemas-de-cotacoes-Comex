@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: cotacoes-fullbrands
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: Supabase__Url
+        sync: false
+      - key: Supabase__PublishableKey
+        sync: false
+      - key: Supabase__SecretKey
+        sync: false
+      - key: ConnectionStrings__Supabase
+        sync: false

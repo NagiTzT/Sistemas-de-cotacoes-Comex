@@ -1,0 +1,5 @@
+@page "/historico"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject CotacaoService Service
+<PageTitle>Histórico de Cotações</PageTitle><section class="page-content"><div class="toolbar"><div><h2>Histórico de Cotações</h2><p>Cotações de todo o time. Grupos e permissões serão aplicados nesta área futuramente.</p></div></div><section class="table-card list-card"><CotacoesComFiltros Cotacoes="Service.Listar()"/></section></section>
