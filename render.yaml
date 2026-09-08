@@ -1,6 +1,8 @@
 services:
   - type: web
     name: cotacoes-fullbrands
+    plan: free
+    region: oregon
     runtime: docker
     dockerfilePath: ./Dockerfile
     healthCheckPath: /health
