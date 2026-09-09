@@ -1,0 +1,1013 @@
+/* Shared FullBrands visual system, adapted from the supplied partner frontend.
+   Business rules, routes and PDF styles stay in the quotation application. */
+:root{--navy:#182a4f;--blue:#315b9d;--muted:#748198;--border:#e4e8f0;--shadow:0 9px 26px rgba(31,48,86,.05)}
+html,body{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;background:#f4f7fc;color:#182a4f}
+button,input,select,textarea{font-family:inherit}
+.app-shell{--sidebar-offset:14px;--sidebar-collapsed-panel-width:70px;--sidebar-expanded-panel-width:264px;display:block;background:#f4f7fc;min-height:100vh}
+.app-shell .main-content{margin-left:98px;padding:20px 24px 0 0;transition:margin-left .32s cubic-bezier(.2,.82,.2,1)}
+.app-shell .sidebar-checkbox:checked~.main-content{margin-left:292px}
+.sidebar-checkbox:focus-visible~.main-content .application-menu-button{outline:3px solid #85a9e0;outline-offset:3px}
+.app-shell .header{position:relative;top:auto;z-index:5;min-height:76px;height:auto;margin:0 0 20px;padding:12px 20px;gap:16px;border:1px solid #e7ebf2;border-radius:18px;background:rgba(255,255,255,.98);box-shadow:0 4px 24px rgba(31,48,86,.05)}
+.header-title{gap:16px;min-width:0}
+.header h1{margin:2px 0 0;font-size:22px;line-height:1.2;letter-spacing:-.03em;font-weight:800}
+.header p{font-size:11px;color:#7b879b}
+.application-eyebrow{font-size:9px;font-weight:800;letter-spacing:.14em;color:#6780ad}
+.application-menu-button{display:grid;place-items:center;width:44px;height:44px;flex:0 0 44px;border:1px solid #dfe5ef;border-radius:12px;background:#fff;color:#45669c;cursor:pointer}
+.lucide-icon{width:18px;height:18px;flex-shrink:0;vertical-align:middle}
+.application-menu-button:hover{background:#f8faff;border-color:#ccd7e8}
+.user{border:1px solid #e5eaf2;border-radius:14px;padding:6px 12px 6px 6px;font-size:12px;max-width:36%}
+.user>span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.avatar{border-radius:10px;background:linear-gradient(135deg,#597bbb,#315b9d)}
+.page-content{max-width:1800px;width:100%;padding:0 0 36px;margin:0 auto}
+.toolbar{margin-bottom:22px}.toolbar h2{font-size:24px;font-weight:800;letter-spacing:-.035em}
+.toolbar p{font-size:12px}
+.button{min-height:40px;padding:10px 16px;border-radius:13px;font-size:12px;font-weight:750;transition:background .2s,box-shadow .2s,transform .2s}
+.button:hover:not(:disabled){transform:translateY(-1px)}
+.primary{background:linear-gradient(135deg,#416fb5,#315b9d);border:1px solid #315b9d;box-shadow:0 6px 16px rgba(49,91,157,.16);color:#fff}
+.primary:hover:not(:disabled){color:#fff;box-shadow:0 9px 22px rgba(49,91,157,.24)}
+.secondary{background:#fff;border-color:#e1e6ee;color:#536fa4;box-shadow:none}
+.secondary:hover:not(:disabled),.icon-button:hover,.edit-link:hover{background:#f8faff;border-color:#ccd7e7}
+.table-card,.form-card,.panel,.steps{border-radius:20px;border-color:#e4e8f0;box-shadow:var(--shadow)}
+.table-card{padding:22px;margin-top:20px}.form-card{padding:26px}.panel{padding:24px}
+.users-layout .user-form-card,.users-layout .users-table-card{margin-top:0}
+.table-title h2,.section-heading h2{font-size:17px;font-weight:800;letter-spacing:-.02em}
+.filters-bar{position:relative;padding:10px;gap:8px;border:1px solid #e4e8f0;border-radius:20px;background:#fff;box-shadow:0 9px 26px rgba(31,48,86,.04)}
+.filters-bar:before{content:"";position:absolute;top:0;left:24px;right:24px;height:1px;background:linear-gradient(90deg,transparent,#597bbb66,#7566c955,#d9689b44,transparent)}
+.filters-bar .search-field,.filter-select{height:40px;border-color:#e3e7ef;border-radius:13px;background:#f8f9fc;color:#43516a}
+.filters-bar .search-field:focus-within{border-color:#cfd9e8;background:#fff;box-shadow:0 5px 14px rgba(49,91,157,.07)}
+.filters-bar .search-field input{height:36px;font-size:12px}.filter-select{font-size:12px}
+th{padding:14px 12px;background:#f8f9fc;color:#748198;letter-spacing:.055em;font-size:10px}
+td{padding:16px 12px;color:#43516a;border-color:#edf0f5}
+tbody tr:hover{background:#f8faff}.number{color:#315b9d}
+.status-select{border-color:#e1e6ee;background:#f0f3fa;color:#536fa4;border-radius:11px;font-weight:700}
+.edit-link,.icon-button{border-radius:12px;width:36px;height:36px;border-color:#e1e6ee;color:#6280b5}
+.steps{padding:10px;gap:4px;justify-content:space-between;background:rgba(255,255,255,.95)}
+.step{border-radius:13px;min-height:44px;white-space:nowrap;font-size:11px}
+.step.current{background:#f0f3fa;color:#315b9d}.step-icon{border-radius:8px}
+.field>span,.field label{color:#43516a;font-size:11px;font-weight:750}
+.field input,.field select,.field textarea{border:1px solid #e3e7ef;border-radius:13px;background:#f8f9fc;color:#43516a;font-size:12px;transition:border-color .2s,box-shadow .2s}
+.field input,.field select{height:44px}
+.field textarea{padding:12px;line-height:1.65}
+.field input:hover,.field select:hover,.field textarea:hover{border-color:#cfd9e8}
+.field input:focus,.field select:focus,.field textarea:focus{outline:0;border-color:#91acd6;background:#fff;box-shadow:0 0 0 3px rgba(89,123,187,.12)}
+.field input:disabled,.field select:disabled{background:#edf0f5;color:#8792a4}
+.model-card,.tax-item-card,.summary-items,.finish-card{border:1px solid #e4e8f0;border-radius:18px;background:#f8f9fc}
+.tax-total{border-color:#dce5f3;background:#f0f3fa;border-radius:13px}
+.form-actions{gap:12px}.form-grid{gap:20px}.summary-actions{flex-wrap:wrap}
+.kpi-grid.compact{max-width:none;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.kpi-grid.compact .kpi-card{position:relative;overflow:hidden;padding:18px 20px;border:0;border-radius:20px;min-height:134px;color:#fff;box-shadow:0 8px 20px rgba(22,181,111,.17);background:linear-gradient(135deg,#13a77d,#25c46a)}
+.kpi-grid .kpi-card:nth-child(2){background:linear-gradient(135deg,#ff9d09,#ff7d19);box-shadow:0 8px 20px rgba(255,142,11,.18)}
+.kpi-grid .kpi-card:nth-child(3){background:linear-gradient(135deg,#6655d9,#8c55ee);box-shadow:0 8px 20px rgba(111,85,220,.17)}
+.kpi-card:after{content:"";position:absolute;right:-36px;top:-52px;width:125px;height:125px;border:1px solid #ffffff22;border-radius:50%;pointer-events:none}
+.kpi-card .kpi-icon{float:right;width:30px;height:30px;border:1px solid #ffffff2e;border-radius:9px;background:#ffffff15;color:#fff}
+.kpi-grid.compact .kpi-label{margin-top:0;color:#fff;text-transform:none;font-size:12px}
+.kpi-card .kpi-value{font-size:32px;line-height:1.2;margin:17px 0 4px;letter-spacing:-.04em}
+.kpi-card .kpi-detail{color:#ffffffe0;font-size:11px}
+.login-wrapper .login-card{padding:0}.login-wrapper .form-title{font-size:30px}
+.login-wrapper .brand-title{font-size:34px}.login-wrapper .mobile-logo-box{background:#182a4f;border-radius:14px;padding:18px}
+.login-wrapper .form-footer{line-height:1.6}
+.login-wrapper .brand-panel{min-width:0}
+:focus-visible{outline:2px solid #597bbb;outline-offset:3px}
+@media(max-width:1000px){.app-shell .main-content{padding-right:16px}.app-shell .sidebar-checkbox:checked~.main-content{margin-left:98px}.user{max-width:28%}.steps{justify-content:flex-start}.step{padding:9px}.users-layout{grid-template-columns:1fr}}
+@media(max-width:700px){.app-shell .main-content,.app-shell .sidebar-checkbox:checked~.main-content{margin-left:0;padding:12px}.app-shell .header{padding:10px 12px;margin-bottom:16px;min-height:72px}.header h1{font-size:17px}.header-title{gap:10px}.header .user{padding:0;border:0;max-width:none}.application-eyebrow{font-size:8px}.page-content{padding:0 0 24px}.app-shell .sidebar-shell{transform:translateX(-110%)}.app-shell:has(.sidebar-checkbox:checked) .sidebar-shell{transform:translateX(0)}.app-shell:has(.sidebar-checkbox:checked) .main-content:after{content:"";position:fixed;inset:90px 0 0;background:#182a4f44;z-index:900;pointer-events:none}.kpi-grid.compact{grid-template-columns:1fr}.kpi-grid.compact .kpi-card{min-height:115px}.table-card,.form-card,.panel{padding:18px 14px}.toolbar{gap:12px}.toolbar h2{font-size:22px}.toolbar .button{align-self:flex-start}.filters-bar{gap:8px}.step span:last-child{display:none}.form-grid,.costs-grid,.item-grid{grid-template-columns:1fr}.summary-actions>div{flex-wrap:wrap}.login-wrapper{padding:16px}.login-wrapper .form-panel{padding:28px 22px}.quotation-title{gap:12px;flex-wrap:wrap}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+/* =========================================================
+   FULLBRANDS ANALYTICS
+   Sidebar definitiva
+   ========================================================= */
+
+.sidebar-shell {
+    position: fixed;
+
+    /* Mantém os 70 px definidos para a versão compacta, incluindo padding e borda. */
+    box-sizing: border-box;
+
+    top: var(--sidebar-offset, 14px);
+    bottom: var(--sidebar-offset, 14px);
+    left: var(--sidebar-offset, 14px);
+
+    width: var(--sidebar-collapsed-panel-width, 70px);
+
+    z-index: 1000;
+
+    pointer-events: none;
+
+    overflow: visible;
+}
+
+
+/* =========================================================
+   PAINEL
+   ========================================================= */
+
+.sidebar-panel {
+    --mouse-x: 38px;
+    --mouse-y: 120px;
+
+    position: absolute;
+
+    /* Sem esta regra, o padding era somado à largura e a publicação ficava maior que o teste. */
+    box-sizing: border-box;
+
+    top: 0;
+    bottom: 0;
+    left: 0;
+
+    width: var(--sidebar-collapsed-panel-width, 70px);
+
+    display: flex;
+    flex-direction: column;
+
+    padding: 14px 10px;
+
+    overflow: hidden;
+
+    pointer-events: auto;
+
+    border-radius: 30px;
+
+    color: #ffffff;
+
+    background:
+        linear-gradient(
+            155deg,
+            rgba(53, 88, 154, 0.88) 0%,
+            rgba(40, 73, 133, 0.84) 35%,
+            rgba(29, 57, 109, 0.86) 68%,
+            rgba(20, 44, 86, 0.91) 100%
+        );
+
+    border:
+        1px solid rgba(255, 255, 255, 0.18);
+
+    box-shadow:
+        0 24px 65px rgba(15, 35, 75, 0.22),
+        0 4px 14px rgba(15, 35, 75, 0.10),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16),
+        inset 1px 0 0 rgba(255, 255, 255, 0.06),
+        inset -1px 0 0 rgba(255, 255, 255, 0.04);
+
+    backdrop-filter:
+        blur(20px)
+        saturate(135%);
+
+    -webkit-backdrop-filter:
+        blur(20px)
+        saturate(135%);
+
+    transition:
+        width 0.32s cubic-bezier(.2, .82, .2, 1),
+        box-shadow 0.25s ease,
+        background 0.25s ease;
+}
+
+
+/* =========================================================
+   LUZ SUPERIOR PERMANENTE
+   ========================================================= */
+
+.sidebar-panel::before {
+    content: "";
+
+    position: absolute;
+
+    inset: 0;
+
+    z-index: 0;
+
+    pointer-events: none;
+
+    border-radius: inherit;
+
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.095) 0%,
+        rgba(255, 255, 255, 0.035) 35%,
+        transparent 100%
+    );
+}
+
+
+/* =========================================================
+   GLOW QUE SEGUE O MOUSE
+   ========================================================= */
+
+.sidebar-panel::after {
+    content: "";
+
+    position: absolute;
+
+    inset: 0;
+
+    z-index: 0;
+
+    pointer-events: none;
+
+    border-radius: inherit;
+
+    background:
+        radial-gradient(
+            190px circle
+            at var(--mouse-x) var(--mouse-y),
+            rgba(180, 207, 255, 0.20),
+            rgba(160, 196, 255, 0.08) 35%,
+            transparent 68%
+        );
+
+    opacity: 0;
+}
+
+
+/* =========================================================
+   GLOW QUE SEGUE O MOUSE
+   ========================================================= */
+
+.sidebar-panel::after {
+    content: "";
+
+    position: absolute;
+
+    inset: 0;
+
+    z-index: 0;
+
+    pointer-events: none;
+
+    border-radius: inherit;
+
+    background:
+        radial-gradient(
+            190px circle
+            at var(--mouse-x) var(--mouse-y),
+            rgba(180, 207, 255, 0.20),
+            rgba(160, 196, 255, 0.08) 35%,
+            transparent 68%
+        );
+
+    opacity: 0;
+
+    transition:
+        opacity 0.22s ease;
+}
+
+
+/* =========================================================
+   SIDEBAR ABERTA OU HOVER
+   ========================================================= */
+
+.sidebar-panel:hover,
+.app-shell:has(.sidebar-checkbox:checked) .sidebar-panel {
+    width: var(--sidebar-expanded-panel-width, 264px);
+
+    box-shadow:
+        0 30px 75px rgba(25, 48, 87, 0.28),
+        0 10px 30px rgba(25, 48, 87, 0.14),
+        inset 0 1px 0 rgba(255, 255, 255, 0.25),
+        inset 1px 0 0 rgba(255, 255, 255, 0.10);
+}
+
+
+.sidebar-panel:hover::after,
+.app-shell:has(.sidebar-checkbox:checked) .sidebar-panel::after {
+    opacity: 1;
+}
+
+
+/* =========================================================
+   CONTEÚDO ACIMA DOS GLOWS
+   ========================================================= */
+
+.sidebar-header,
+.sidebar-navigation,
+.sidebar-footer {
+    position: relative;
+
+    z-index: 2;
+}
+
+
+/* =========================================================
+   BRAND
+   ========================================================= */
+
+.sidebar-header {
+    position: relative;
+
+    height: 60px;
+
+    display: flex;
+    align-items: center;
+
+    flex-shrink: 0;
+}
+
+
+.sidebar-toggle {
+    position: relative;
+
+    width: 100%;
+    height: 52px;
+
+    padding: 0;
+
+    border: 0;
+
+    color: inherit;
+    background: transparent;
+
+    cursor: pointer;
+
+    display: flex;
+    align-items: center;
+}
+
+
+.sidebar-toggle:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.8);
+    outline-offset: 3px;
+    border-radius: 14px;
+}
+
+.sidebar-panel .sidebar-toggle,
+.sidebar-panel .sidebar-toggle:hover {
+    background: transparent;
+    border: 0;
+    color: inherit;
+}
+
+
+/* =========================================================
+   BRAND COMPACTO
+   ========================================================= */
+
+.brand-compact {
+    position: absolute;
+
+    left: 4px;
+    top: 5px;
+
+    width: 42px;
+    height: 42px;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 13px;
+
+    font-size: 12px;
+    font-weight: 800;
+
+    letter-spacing: -0.3px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.14),
+            rgba(255, 255, 255, 0.055)
+        );
+
+    border:
+        1px solid rgba(255, 255, 255, 0.17);
+
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.13);
+
+    opacity: 1;
+
+    transform:
+        scale(1);
+
+    transition:
+        opacity 0.18s ease,
+        transform 0.25s ease;
+}
+
+/* =========================================================
+   BRAND EXPANDIDO
+   ========================================================= */
+
+.brand-expanded {
+    position: absolute;
+
+    left: 8px;
+    top: 50%;
+
+    transform:
+        translateY(-50%) translateX(-8px);
+
+    width: 195px;
+    height: 44px;
+
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+
+    white-space: nowrap;
+
+    opacity: 0;
+
+    transition:
+        opacity 0.18s ease 0.05s,
+        transform 0.25s ease 0.04s;
+}
+
+
+.sidebar-panel:hover .brand-compact,
+.app-shell:has(.sidebar-checkbox:checked) .sidebar-panel .brand-compact {
+    opacity: 0;
+
+    transform:
+        scale(0.82);
+}
+
+
+.sidebar-panel:hover .brand-expanded,
+.app-shell:has(.sidebar-checkbox:checked) .sidebar-panel .brand-expanded {
+    opacity: 1;
+
+    transform:
+        translateY(-50%) translateX(0);
+}
+
+
+/* =========================================================
+   MARCA VISUAL
+   ========================================================= */
+
+.brand-full-logo {
+    display: block;
+    width: 180px;
+    height: 40px;
+    object-fit: contain;
+    object-position: left center;
+    filter: drop-shadow(0 2px 8px rgba(11, 29, 65, 0.25));
+}
+
+
+/* =========================================================
+   NAVEGAÇÃO
+   ========================================================= */
+
+.sidebar-navigation {
+    flex: 1;
+
+    min-height: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 6px;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    scrollbar-width: none;
+}
+
+
+.sidebar-navigation::-webkit-scrollbar {
+    display: none;
+}
+
+
+/* =========================================================
+   ITEM PRINCIPAL
+   ========================================================= */
+
+.menu-item {
+    position: relative;
+
+    width: 48px;
+    height: 48px;
+
+    display: flex;
+    align-items: center;
+
+    flex-shrink: 0;
+
+    padding: 0;
+
+    border: 0;
+
+    border-radius: 14px;
+
+    text-decoration: none;
+
+    color:
+        rgba(239, 246, 255, 0.80);
+
+    background:
+        transparent;
+
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+
+    transition:
+        width 0.30s cubic-bezier(.2, .82, .2, 1),
+        color 0.16s ease,
+        background 0.18s ease,
+        box-shadow 0.18s ease;
+}
+
+
+.menu-item:link,
+.menu-item:visited {
+    color:
+        rgba(239, 246, 255, 0.80);
+
+    transition:
+        width 0.30s cubic-bezier(.2, .82, .2, 1),
+        color 0.16s ease,
+        background 0.18s ease,
+        box-shadow 0.18s ease;
+}
+
+
+.menu-item:link,
+.menu-item:visited {
+    color:
+        rgba(239, 246, 255, 0.80);
+
+    text-decoration: none;
+}
+
+
+/* item aumenta somente enquanto a sidebar está aberta ou em hover */
+
+.sidebar-panel:hover .menu-item,
+.app-shell:has(.sidebar-checkbox:checked) .sidebar-panel .menu-item {
+    width: 236px;
+}
+
+
+/* =========================================================
+   ICON BOX
+   ========================================================= */
+
+.icon-box {
+    width: 48px;
+    height: 48px;
+
+    display: grid;
+    place-items: center;
+
+    flex: 0 0 48px;
+
+    border-radius: 14px;
+
+    transition:
+        background 0.18s ease,
+        box-shadow 0.18s ease,
+        transform 0.18s ease;
+}
+
+
+.icon-box svg {
+    width: 20px;
+    height: 20px;
+
+    fill: none;
+
+    stroke: currentColor;
+
+    stroke-width: 1.75;
+
+    stroke-linecap: round;
+    stroke-linejoin: round;
+
+    vector-effect:
+        non-scaling-stroke;
+}
+
+
+/* =========================================================
+   LABEL
+   ========================================================= */
+
+.menu-label {
+    display: block;
+
+    max-width: 0;
+
+    margin-left: 0;
+
+    overflow: hidden;
+
+    white-space: nowrap;
+
+    opacity: 0;
+
+    transform:
+        translateX(-7px);
+
+    font-size: 13px;
+    font-weight: 500;
+
+    transition:
+        max-width 0.28s ease,
+        margin-left 0.28s ease,
+        opacity 0.16s ease 0.06s,
+        transform 0.22s ease;
+}
+
+
+.sidebar-panel:hover .menu-label,
+.app-shell:has(.sidebar-checkbox:checked) .sidebar-panel .menu-label {
+    max-width: 150px;
+
+    margin-left: 11px;
+
+    opacity: 1;
+
+    transform:
+        translateX(0);
+}
+
+
+/* =========================================================
+   HOVER DOS ITENS
+   ========================================================= */
+
+.menu-item:hover {
+    color: #ffffff;
+
+    text-decoration: none;
+}
+
+
+.menu-item:hover .icon-box {
+    background:
+        rgba(255, 255, 255, 0.07);
+}
+
+
+/* =========================================================
+   ITEM ATIVO
+   Glass pill
+   ========================================================= */
+
+.menu-item.active {
+    color: #ffffff;
+
+    text-decoration: none;
+}
+
+
+.menu-item.active .icon-box {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.17),
+            rgba(255, 255, 255, 0.07)
+        );
+
+    border:
+        1px solid rgba(255, 255, 255, 0.14);
+
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.15),
+        0 7px 18px rgba(15, 38, 77, 0.10);
+
+    backdrop-filter:
+        blur(8px);
+
+    -webkit-backdrop-filter:
+        blur(8px);
+}
+
+
+.sidebar-panel:hover .menu-item.active,
+.app-shell:has(.sidebar-checkbox:checked) .sidebar-panel .menu-item.active {
+    background:
+        linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0.105),
+            rgba(255, 255, 255, 0.055)
+        );
+
+    border:
+        1px solid rgba(255, 255, 255, 0.10);
+
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.09);
+}
+
+
+/* =========================================================
+   CHEVRON
+   ========================================================= */
+
+.menu-chevron {
+    width: 18px;
+    height: 18px;
+
+    margin-left: auto;
+    margin-right: 12px;
+
+    display: grid;
+    place-items: center;
+
+    opacity: 0;
+
+    transform:
+        translateX(-4px);
+
+    transition:
+        opacity 0.16s ease,
+        transform 0.2s ease;
+}
+
+
+.menu-chevron svg {
+    width: 15px;
+    height: 15px;
+
+    fill: none;
+
+    stroke: currentColor;
+
+    stroke-width: 1.8;
+
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+
+.sidebar-panel:hover .commercial-item.is-expanded .menu-chevron,
+.app-shell:has(.sidebar-checkbox:checked) .sidebar-panel .commercial-item.is-expanded .menu-chevron {
+    opacity: 0.75;
+
+    transform:
+        translateX(0)
+        rotate(90deg);
+}
+
+/* A seta fica visível mesmo antes da abertura do submenu. */
+.sidebar-panel:hover .commercial-item .menu-chevron,
+.app-shell:has(.sidebar-checkbox:checked) .sidebar-panel .commercial-item .menu-chevron {
+    opacity: 0.68;
+
+    transform:
+        translateX(0);
+}
+
+
+/* =========================================================
+   SUBMENU
+   ========================================================= */
+
+.submenu {
+    position: relative;
+
+    max-height: 0;
+
+    margin:
+        0 0 0 34px;
+
+    padding:
+        0 0 0 17px;
+
+    overflow: hidden;
+
+    opacity: 0;
+
+    pointer-events: none;
+
+    transition:
+        max-height 0.30s ease,
+        opacity 0.18s ease,
+        margin 0.30s ease,
+        padding 0.30s ease;
+}
+
+
+/*
+   O submenu continua aberto enquanto a sidebar
+   possui a classe .is-open ou está em hover.
+*/
+
+.sidebar-panel:hover .submenu.is-open,
+.app-shell:has(.sidebar-checkbox:checked) .sidebar-panel .submenu.is-open {
+    max-height: 240px;
+    margin: 2px 0 8px 34px;
+    padding: 4px 0 4px 17px;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.submenu::before {
+    content: "";
+    position: absolute;
+    top: 5px;
+    bottom: 5px;
+    left: 1px;
+    width: 1px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.19), rgba(255, 255, 255, 0.06));
+}
+
+/* =========================================================
+   ITEM DO SUBMENU
+   ========================================================= */
+
+.submenu-item {
+    height: 36px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 9px;
+
+    padding:
+        0 11px;
+
+    border-radius: 10px;
+
+    color:
+        rgba(237, 244, 255, 0.62);
+
+    text-decoration: none;
+
+    font-size: 11px;
+    font-weight: 500;
+
+    white-space: nowrap;
+
+    transition:
+        color 0.16s ease,
+        background 0.16s ease,
+        box-shadow 0.16s ease;
+}
+
+
+.submenu-item:link,
+.submenu-item:visited {
+    color:
+        rgba(237, 244, 255, 0.62);
+
+    text-decoration: none;
+}
+
+
+.submenu-item:hover {
+    color: #ffffff;
+
+    text-decoration: none;
+
+    background:
+        rgba(255, 255, 255, 0.045);
+}
+
+
+.submenu-item.active {
+    color: #ffffff;
+
+    font-weight: 700;
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0.12),
+            rgba(255, 255, 255, 0.055)
+        );
+
+    border:
+        1px solid rgba(255, 255, 255, 0.11);
+
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+
+/* =========================================================
+   ÍCONES DO SUBMENU
+   ========================================================= */
+
+.submenu-icon {
+    width: 16px;
+    height: 16px;
+
+    display: grid;
+    place-items: center;
+
+    flex: 0 0 16px;
+}
+
+
+.submenu-icon svg {
+    width: 15px;
+    height: 15px;
+
+    fill: none;
+
+    stroke: currentColor;
+
+    stroke-width: 1.65;
+
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+
+/* =========================================================
+   SEPARADORES
+   ========================================================= */
+
+.menu-divider {
+    width: 30px;
+    height: 1px;
+
+    margin:
+        7px 9px;
+
+    flex-shrink: 0;
+
+    background:
+        rgba(255, 255, 255, 0.08);
+
+    transition:
+        width 0.30s ease,
+        margin 0.30s ease;
+}
+
+
+.app-shell:has(.sidebar-checkbox:checked) .sidebar-panel .menu-divider {
+    width: 206px;
+
+    margin:
+        7px 14px;
+}
+
+
+/* =========================================================
+   FOOTER
+   ========================================================= */
+
+.sidebar-footer {
+    padding-top: 10px;
+    margin-top: auto;
+    flex-shrink: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+
+/* =========================================================
+   BADGES DE CONSTRUÇÃO NOS MÓDULOS
+   ========================================================= */
+
+.construction-dot {
+    position: absolute;
+    top: 9px;
+    right: 9px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #f59e0b;
+    color: #ffffff;
+    font-size: 9px;
+    font-weight: 900;
+    line-height: 14px;
+    text-align: center;
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.7);
+    animation: constructionPulse 2s ease-in-out infinite alternate;
+    pointer-events: none;
+}
+
+@keyframes constructionPulse {
+    0% {
+        transform: scale(0.92);
+        box-shadow: 0 0 6px rgba(245, 158, 11, 0.5);
+    }
+    100% {
+        transform: scale(1.08);
+        box-shadow: 0 0 14px rgba(245, 158, 11, 0.9);
+    }
+}
+
+.construction-tag {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 6px;
+    background: rgba(245, 158, 11, 0.2);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    color: #fcd34d;
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    margin-left: 6px;
+    vertical-align: middle;
+    text-transform: uppercase;
+}
+
+/* =========================================================
+   RESPONSIVO
+   ========================================================= */
+
+@media (max-width: 900px) {
+
+    .sidebar-shell {
+        display: block;
+    }
+
+}

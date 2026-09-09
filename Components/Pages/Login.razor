@@ -1,31 +1,42 @@
 @page "/login"
 @layout Layout.LoginLayout
 @attribute [AllowAnonymous]
-
-<PageTitle>Entrar</PageTitle>
-
-<section class="login-page">
-    <div class="login-brand"><span class="brand-mark">C</span><strong>Cotações</strong></div>
+<PageTitle>Entrar · Full Brands</PageTitle>
+<div class="login-wrapper">
+    <div class="bg-orb orb-top" aria-hidden="true"></div><div class="bg-orb orb-bottom" aria-hidden="true"></div>
     <div class="login-card">
-        <div class="login-heading">
-            <span class="login-kicker">Acesso ao sistema</span>
-            <h1>Bem-vindo</h1>
-            <p>Entre com seu usuário e senha para gerenciar as cotações.</p>
-        </div>
-        @if (!string.IsNullOrWhiteSpace(Erro))
-        {
-            <div class="alert error">Usuário ou senha inválidos.</div>
-        }
-        <form method="post" action="/auth/login" class="login-form">
-            <input type="hidden" name="returnUrl" value="@ReturnUrlSeguro" />
-            <label class="field"><span>E-mail</span><input name="login" type="email" autocomplete="username" required autofocus placeholder="Digite seu e-mail" /></label>
-            <label class="field"><span>Senha</span><input name="senha" type="password" autocomplete="current-password" required placeholder="Digite sua senha" /></label>
-            <button class="button primary login-button" type="submit">Entrar</button>
-        </form>
+        <section class="brand-panel">
+            <div class="brand-backdrop" aria-hidden="true"></div><div class="brand-orbit orbit-1" aria-hidden="true"></div><div class="brand-orbit orbit-2" aria-hidden="true"></div>
+            <div class="brand-top"><img class="brand-logo" src="images/logo-fullbrand.svg" alt="Full Brands" /></div>
+            <div class="brand-body">
+                <div class="brand-badge"><LucideIcon Name="shield-check" /><span>Sistema de Cotações</span></div>
+                <h1 class="brand-title">Suas propostas.<br />Uma operação conectada.</h1>
+                <p class="brand-desc">Organize cotações de importação, acompanhe negociações e prepare propostas comerciais em um só lugar.</p>
+                <div class="brand-features">
+                    <div class="feature-item"><div class="feature-icon"><LucideIcon Name="file-text" /></div><div><strong>Propostas completas</strong><small>Modelos, produtos, custos e impostos.</small></div></div>
+                    <div class="feature-item"><div class="feature-icon"><LucideIcon Name="chart" /></div><div><strong>Acompanhamento comercial</strong><small>Histórico e status das suas cotações.</small></div></div>
+                    <div class="feature-item"><div class="feature-icon"><LucideIcon Name="lock-keyhole" /></div><div><strong>Acesso restrito</strong><small>Usuários autorizados pela administração.</small></div></div>
+                </div>
+            </div>
+            <div class="brand-footer">© @DateTime.Now.Year Full Brands · Todos os direitos reservados</div>
+        </section>
+        <section class="form-panel">
+            <div class="mobile-logo-box"><img class="mobile-logo" src="images/logo-fullbrand.svg" alt="Full Brands" /></div>
+            <div class="form-container">
+                <div class="lock-icon-box"><LucideIcon Name="lock" /></div>
+                <div class="form-header"><span class="form-eyebrow">Acesso ao ambiente</span><h2 class="form-title">Boas-vindas</h2><p class="form-subtitle">Entre com seu e-mail e senha para continuar.</p></div>
+                @if (!string.IsNullOrWhiteSpace(Erro)) { <div class="alert-error" role="alert">Usuário ou senha inválidos.</div> }
+                <form method="post" action="/auth/login" class="auth-form">
+                    <input type="hidden" name="returnUrl" value="@ReturnUrlSeguro" />
+                    <div class="form-group"><label for="login-email">E-mail</label><div class="input-container"><LucideIcon Name="mail" /><input id="login-email" name="login" type="email" autocomplete="username" required autofocus placeholder="Digite seu e-mail" /></div></div>
+                    <div class="form-group"><label for="login-password">Senha</label><div class="input-container"><LucideIcon Name="lock" /><input id="login-password" name="senha" type="password" autocomplete="current-password" required placeholder="Digite sua senha" /></div></div>
+                    <button class="submit-button" type="submit">Entrar no sistema <LucideIcon Name="arrow-right" /></button>
+                </form>
+                <p class="form-footer">Precisa de acesso? Entre em contato com o administrador.</p>
+            </div>
+        </section>
     </div>
-    <p class="login-footer">Full Brands · Sistema de Cotações</p>
-</section>
-
+</div>
 @code {
     [SupplyParameterFromQuery] public string? Erro { get; set; }
     [SupplyParameterFromQuery] public string? ReturnUrl { get; set; }

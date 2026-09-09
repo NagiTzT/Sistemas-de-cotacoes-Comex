@@ -1,9 +1,12 @@
-<a class="brand" href="/"><span class="brand-mark">C</span><strong class="nav-label">Cotações</strong></a>
-<nav>
-    <NavLink class="nav-item" href="" Match="NavLinkMatch.All"><span>⌂</span><span class="nav-label">Visão Geral</span></NavLink>
-    <NavLink class="nav-item" href="cotacoes" Match="NavLinkMatch.All"><span>▤</span><span class="nav-label">Minhas Cotações</span></NavLink>
-    <NavLink class="nav-item" href="historico" Match="NavLinkMatch.All"><span>◷</span><span class="nav-label">Histórico de Cotações</span></NavLink>
-    <NavLink class="nav-item" href="cotacoes/nova" Match="NavLinkMatch.All"><span>＋</span><span class="nav-label">Nova Cotação</span></NavLink>
-    <AuthorizeView Roles="Administrador"><NavLink class="nav-item" href="administracao/usuarios"><span>♙</span><span class="nav-label">Usuários</span></NavLink></AuthorizeView>
-</nav>
-<form class="sign-out" method="post" action="/auth/logout"><button type="submit"><span>↪</span><span class="nav-label">Sair</span></button></form>
+<div class="sidebar-panel">
+    <div class="sidebar-header"><label class="sidebar-toggle" for="sidebar-checkbox" title="Fixar ou recolher menu"><span class="brand-compact">FB</span><span class="brand-expanded"><img class="brand-full-logo" src="images/logo-fullbrand.svg" alt="Full Brands" /></span></label></div>
+    <nav class="sidebar-navigation" aria-label="Navegação principal">
+        <NavLink class="menu-item" href="" Match="NavLinkMatch.All" title="Visão Geral"><span class="icon-box"><LucideIcon Name="chart" /></span><span class="menu-label">Visão Geral</span></NavLink>
+        <div class="menu-divider"></div>
+        <NavLink class="menu-item" href="cotacoes" Match="NavLinkMatch.All" title="Minhas Cotações"><span class="icon-box"><LucideIcon Name="file-text" /></span><span class="menu-label">Minhas Cotações</span></NavLink>
+        <NavLink class="menu-item" href="historico" Match="NavLinkMatch.All" title="Histórico de Cotações"><span class="icon-box"><LucideIcon Name="history" /></span><span class="menu-label">Histórico de Cotações</span></NavLink>
+        <NavLink class="menu-item" href="cotacoes/nova" Match="NavLinkMatch.All" title="Nova Cotação"><span class="icon-box"><LucideIcon Name="plus" /></span><span class="menu-label">Nova Cotação</span></NavLink>
+        <AuthorizeView Roles="Administrador"><div class="menu-divider"></div><NavLink class="menu-item" href="administracao/usuarios" title="Usuários"><span class="icon-box"><LucideIcon Name="users" /></span><span class="menu-label">Usuários</span></NavLink></AuthorizeView>
+    </nav>
+    <form class="sidebar-footer" method="post" action="/auth/logout"><button class="menu-item" type="submit" title="Sair"><span class="icon-box"><LucideIcon Name="log-out" /></span><span class="menu-label">Sair</span></button></form>
+</div>

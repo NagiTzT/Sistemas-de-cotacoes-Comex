@@ -1,13 +1,13 @@
 @inherits LayoutComponentBase
 
 <div class="app-shell">
-    <input class="sidebar-checkbox" id="sidebar-checkbox" type="checkbox" />
-    <aside class="sidebar"><NavMenu /></aside>
+    <input class="sidebar-checkbox" id="sidebar-checkbox" type="checkbox" aria-label="Fixar ou recolher menu lateral" />
+    <aside class="sidebar-shell"><NavMenu /></aside>
     <main class="main-content">
         <header class="header">
             <div class="header-title">
-                <label class="sidebar-toggle" for="sidebar-checkbox" title="Recolher ou expandir menu">☰</label>
-                <div><h1>Sistema de Cotações</h1><p>Gerencie cotações de importação com agilidade e precisão.</p></div>
+                <label class="application-menu-button" for="sidebar-checkbox" title="Recolher ou expandir menu"><LucideIcon Name="menu" /></label>
+                <div><span class="application-eyebrow">FULLBRANDS / COMERCIAL</span><h1>Sistema de Cotações</h1><p>Gerencie suas propostas de importação.</p></div>
             </div>
             <AuthorizeView><Authorized Context="auth"><div class="user"><span class="avatar">@Iniciais(auth.User.Identity?.Name)</span><span>@auth.User.Identity?.Name</span></div></Authorized></AuthorizeView>
         </header>

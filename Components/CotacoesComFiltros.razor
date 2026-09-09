@@ -1,6 +1,6 @@
 <div class="filters-bar">
-    <label class="search-field"><span>⌕</span><input @bind="Numero" @bind:event="oninput" placeholder="Filtrar por número da cotação" /></label>
-    <select class="filter-select" @bind="Status"><option value="">Todos os status</option>@foreach(var status in StatusCotacao.Todos){<option value="@status">@status</option>}</select>
+    <label class="search-field"><LucideIcon Name="search" /><input aria-label="Filtrar por número da cotação" @bind="Numero" @bind:event="oninput" placeholder="Filtrar por número da cotação" /></label>
+    <select class="filter-select" aria-label="Filtrar por status" @bind="Status"><option value="">Todos os status</option>@foreach(var status in StatusCotacao.Todos){<option value="@status">@status</option>}</select>
 </div>
 <CotacoesTabela Cotacoes="Filtradas" />
 
