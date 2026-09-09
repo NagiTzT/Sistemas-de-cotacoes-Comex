@@ -3,14 +3,260 @@
 @attribute [Authorize]
 @rendermode InteractiveServer
 @inject CotacaoService Service
+@inject CambioService CambioService
 @inject NavigationManager Nav
 @inject AuthenticationStateProvider AuthenticationStateProvider
-<PageTitle>Nova Cotação</PageTitle>
-<section class="page-content form-page"><Steps Current="Step" OnChange="IrPara"/>@if(!string.IsNullOrWhiteSpace(Error)){<div class="alert error">@Error</div>}<div class="form-card">
-@if(Step==0){<div class="section-heading"><h2>Dados da Cotação</h2><p>Identifique o cliente e as condições comerciais.</p></div><div class="form-grid"><Field Label="Cliente *"><input @bind="Form.Cliente" @bind:event="oninput" placeholder="Digite ou selecione o cliente"/></Field><Field Label="Destino *"><input @bind="Form.Destino" @bind:event="oninput" placeholder="Cidade ou local de destino"/></Field><Field Label="Origem *"><input @bind="Form.Origem" @bind:event="oninput" placeholder="País de origem"/></Field><Field Label="Câmbio (USD → BRL) *"><DecimalInput @bind-Value="Form.Cambio" Placeholder="Ex.: 5,49" /></Field><Field Label="Data da Cotação *"><DateInput @bind-Value="Form.DataCotacao" /></Field><Field Label="Modelo do PDF *"><select @bind="Form.ModeloPdf"><option value="@ModeloPdf.FullBeauty">Full Beauty</option><option value="@ModeloPdf.FullPharma">Full Pharma</option></select></Field></div>}
-@if(Step==1){<div class="section-heading row"><div><h2>Modelos e Itens</h2><p>Cada modelo aceita exatamente um item e um único fornecedor.</p></div><button class="button secondary" @onclick="AdicionarModelo">＋ Adicionar modelo</button></div><div class="models-list">@foreach(var modelo in Form.Modelos){<section class="model-card" @key="modelo.Id"><div class="model-header"><strong>Modelo @(Form.Modelos.IndexOf(modelo)+1)</strong><button class="icon-button danger" disabled="@(Form.Modelos.Count==1)" @onclick="()=>RemoverModelo(modelo)">×</button></div><div class="form-grid"><Field Label="Nome do modelo *"><input @bind="modelo.Nome" @bind:event="oninput" placeholder="Ex.: Frasco âmbar 100 ml"/></Field><Field Label="Código interno do fornecedor *"><input @bind="modelo.CodigoFornecedor" @bind:event="oninput" placeholder="Código interno"/></Field></div>@if(!modelo.ItemAdicionado){<button class="button secondary add-item" @onclick="()=>modelo.ItemAdicionado=true">＋ Adicionar item</button>}else{<div class="item-box"><div class="item-title"><strong>Item único deste modelo</strong><button class="text-button danger-text" @onclick="()=>modelo.ItemAdicionado=false">Remover item</button></div><div class="form-grid item-grid"><Field Label="Produto *"><input @bind="modelo.Item.Descricao" @bind:event="oninput"/></Field><Field Label="Código do produto *"><input @bind="modelo.Item.Codigo" @bind:event="oninput"/></Field><Field Label="NCM *"><input @bind="modelo.Item.Ncm" @bind:event="oninput" placeholder="0000.00.00"/></Field><Field Label="Quantidade *"><input @bind="modelo.Item.Quantidade" type="number" min="0.01"/></Field><Field Label="Material"><input @bind="modelo.Item.Material"/></Field><Field Label="Tamanho"><input @bind="modelo.Item.Tamanho"/></Field><Field Label="Especificação"><input @bind="modelo.Item.Especificacao"/></Field><Field Label="Capacidade"><input @bind="modelo.Item.Capacidade"/></Field><Field Label="Preço unitário (USD) *"><input @bind="modelo.Item.PrecoUnitarioUsd" type="number" min="0" step="0.01"/></Field></div></div>}</section>}</div>}
-@if(Step==2){<div class="section-heading"><h2>Custos e Impostos por Item</h2><p>Cada NCM possui suas próprias alíquotas. Preencha os percentuais do item correspondente.</p></div><div class="tax-items">@foreach(var modelo in Form.Modelos.Where(x=>x.ItemAdicionado)){<ImpostosItemEditor Modelo="modelo" />}</div><div class="section-heading commercial-heading"><h2>Condições gerais da cotação</h2><p>Estes valores são aplicados depois da soma de todos os itens.</p></div><div class="form-grid"><Field Label="Despesas adicionais (R$)"><input @bind="Form.DespesasAdicionaisReais" type="number" min="0" step="0.01"/></Field><Field Label="Margem sobre o custo total (%)"><input @bind="Form.MargemPercentual" type="number" min="0" step="0.01"/></Field></div>}
-@if(Step==3){<div class="section-heading"><h2>Resumo para conferência</h2><p>O fornecedor foi retirado desta prévia porque pode variar entre os modelos.</p></div><ResumoValores Cotacao="Form"/><div class="summary-items"><h3>Modelos da Cotação</h3>@foreach(var m in Form.Modelos.Where(x=>x.ItemAdicionado)){<div class="summary-item"><div><strong>@m.Nome</strong><span>@m.Item.Descricao · NCM @m.Item.Ncm · @m.Item.Quantidade unidade(s)</span></div><strong>@((m.Item.Quantidade*m.Item.PrecoUnitarioUsd).ToString("C",Usd))</strong></div>}</div>}
-@if(Step==4){<div class="section-heading"><h2>Finalizar</h2><p>A cotação será salva e o PDF poderá ser gerado no modelo escolhido.</p></div><div class="finish-card"><strong>@(Form.ModeloPdf==ModeloPdf.FullBeauty?"Full Beauty":"Full Pharma")</strong><span>@Form.Modelos.Count(x=>x.ItemAdicionado) modelo(s) preenchido(s)</span></div>}
-<div class="form-actions"><button class="button secondary" disabled="@(Step==0)" @onclick="()=>Step--">← Voltar</button>@if(Step<4){<button class="button primary" @onclick="Continuar">Continuar →</button>}else{<button class="button primary" @onclick="Salvar">Salvar Cotação</button>}</div></div></section>
-@code { [Parameter] public Guid? Id{get;set;} Cotacao Form=new(); int Step; string Error=""; string DataTexto {get=>Form.DataCotacao.ToString("yyyy-MM-dd");set{if(DateOnly.TryParse(value,out var d))Form.DataCotacao=d;}} static CultureInfo Usd=>CultureInfo.GetCultureInfo("en-US"); protected override void OnInitialized(){if(Id.HasValue)Form=Service.Obter(Id.Value)??new();} void AdicionarModelo()=>Form.Modelos.Add(new()); void RemoverModelo(ModeloCotacao m)=>Form.Modelos.Remove(m); void IrPara(int s){if(s<=Step){Step=s;Error="";}else Continuar();} void Continuar(){Error=Validar();if(Error=="")Step=Math.Min(4,Step+1);} string Validar(){if(Step==0&&(string.IsNullOrWhiteSpace(Form.Cliente)||string.IsNullOrWhiteSpace(Form.Destino)||string.IsNullOrWhiteSpace(Form.Origem)||Form.Cambio<=0))return "Preencha todos os dados obrigatórios da cotação.";if(Step==1&&(Form.Modelos.Count==0||Form.Modelos.Any(m=>string.IsNullOrWhiteSpace(m.Nome)||string.IsNullOrWhiteSpace(m.CodigoFornecedor)||!m.ItemAdicionado||string.IsNullOrWhiteSpace(m.Item.Descricao)||string.IsNullOrWhiteSpace(m.Item.Codigo)||string.IsNullOrWhiteSpace(m.Item.Ncm)||m.Item.Quantidade<=0)))return "Cada modelo deve ter nome, código de fornecedor e exatamente um item completo, incluindo o NCM.";return "";} async Task Salvar(){for(var s=0;s<2;s++){Step=s;var e=Validar();if(e!=""){Error=e;return;}}var auth=await AuthenticationStateProvider.GetAuthenticationStateAsync();var idTexto=auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;Guid? usuarioId=Guid.TryParse(idTexto,out var id)?id:null;Service.Salvar(Form,usuarioId);Nav.NavigateTo($"/cotacoes/{Form.Id}/resumo");}}
+
+<PageTitle>@(string.IsNullOrEmpty(Form.Numero) ? "Nova Cotação" : "Editar Cotação")</PageTitle>
+
+<section class="page-content form-page">
+    <Steps Current="Step" OnChange="IrPara" />
+    @if (Form.CotacaoOrigemId.HasValue && string.IsNullOrEmpty(Form.Numero))
+    {
+        <div class="alert" role="status">A cotação original já teve o PDF gerado e será preservada. Você está preenchendo uma nova cotação com os mesmos dados. Ela receberá outro número ao salvar.</div>
+    }
+    @if (!string.IsNullOrWhiteSpace(Error)) { <div class="alert error">@Error</div> }
+    <div class="form-card">
+        @if (Step == 0)
+        {
+            <div class="section-heading"><h2>Dados da Cotação</h2><p>Identifique o cliente, a modalidade de carga e as condições comerciais.</p></div>
+            <div class="form-grid">
+                <Field Label="Cliente *"><input @bind="Form.Cliente" @bind:event="oninput" placeholder="Digite ou selecione o cliente" /></Field>
+                <Field Label="Destino *"><input @bind="Form.Destino" @bind:event="oninput" placeholder="Cidade ou local de destino" /></Field>
+                <Field Label="Origem *"><input @bind="Form.Origem" @bind:event="oninput" placeholder="País de origem" /></Field>
+                <Field Label="Modalidade da carga *">
+                    <select @bind="Form.Calculo.ModalidadeCarga"><option value="@ModalidadeCarga.Lcl">LCL</option><option value="@ModalidadeCarga.Fcl">FCL</option></select>
+                </Field>
+                <Field Label="Câmbio (USD → BRL) *"><DecimalInput @bind-Value="Form.Cambio" Placeholder="Ex.: 5,49" /></Field>
+                <Field Label="Data da Cotação *"><DateInput @bind-Value="Form.DataCotacao" /></Field>
+                <Field Label="Modelo do PDF *"><select @bind="Form.ModeloPdf"><option value="@ModeloPdf.FullBeauty">Full Beauty</option><option value="@ModeloPdf.FullPharma">Full Pharma</option></select></Field>
+            </div>
+            <div class="exchange-note @(!string.IsNullOrWhiteSpace(AvisoCambio) ? "warning" : "")">
+                @if (CarregandoCambio) { <span>Consultando a última PTAX de venda do Banco Central...</span> }
+                else if (!string.IsNullOrWhiteSpace(AvisoCambio)) { <span>@AvisoCambio</span> }
+                else if (Form.DataReferenciaCambio.HasValue) { <span>PTAX de venda preenchida automaticamente. Referência: @Form.DataReferenciaCambio.Value.ToString("dd/MM/yyyy"). Você pode ajustar o valor manualmente.</span> }
+            </div>
+        }
+
+        @if (Step == 1)
+        {
+            <div class="section-heading row"><div><h2>Modelos e Itens</h2><p>Cada modelo aceita exatamente um item e um único fornecedor.</p></div><button class="button secondary" @onclick="AdicionarModelo">＋ Adicionar modelo</button></div>
+            <div class="models-list">
+                @foreach (var modelo in Form.Modelos)
+                {
+                    <section class="model-card" @key="modelo.Id">
+                        <div class="model-header"><strong>Modelo @(Form.Modelos.IndexOf(modelo) + 1)</strong><button class="icon-button danger" disabled="@(Form.Modelos.Count == 1)" @onclick="() => RemoverModelo(modelo)">×</button></div>
+                        <div class="form-grid"><Field Label="Nome do modelo *"><input @bind="modelo.Nome" @bind:event="oninput" placeholder="Ex.: Frasco âmbar 100 ml" /></Field><Field Label="Código interno do fornecedor *"><input @bind="modelo.CodigoFornecedor" @bind:event="oninput" placeholder="Código interno" /></Field></div>
+                        @if (!modelo.ItemAdicionado) { <button class="button secondary add-item" @onclick="() => modelo.ItemAdicionado = true">＋ Adicionar item</button> }
+                        else
+                        {
+                            <div class="item-box">
+                                <div class="item-title"><strong>Item único deste modelo</strong><button class="text-button danger-text" @onclick="() => modelo.ItemAdicionado = false">Remover item</button></div>
+                                <div class="form-grid item-grid">
+                                    <Field Label="Produto *"><input @bind="modelo.Item.Descricao" @bind:event="oninput" /></Field>
+                                    <Field Label="Código do produto *"><input @bind="modelo.Item.Codigo" @bind:event="oninput" /></Field>
+                                    <Field Label="NCM *"><input @bind="modelo.Item.Ncm" @bind:event="oninput" placeholder="0000.00.00" /></Field>
+                                    <Field Label="Quantidade *"><DecimalInput @bind-Value="modelo.Item.Quantidade" Placeholder="Ex.: 6.000" /></Field>
+                                    <Field Label="Material"><input @bind="modelo.Item.Material" /></Field>
+                                    <Field Label="Tamanho"><input @bind="modelo.Item.Tamanho" /></Field>
+                                    <Field Label="Especificação"><input @bind="modelo.Item.Especificacao" /></Field>
+                                    <Field Label="Capacidade"><input @bind="modelo.Item.Capacidade" /></Field>
+                                    <Field Label="Preço unitário FOB (USD) *"><DecimalInput @bind-Value="modelo.Item.PrecoUnitarioUsd" Placeholder="Ex.: 1,27" /></Field>
+                                </div>
+                            </div>
+                        }
+                    </section>
+                }
+            </div>
+        }
+
+        @if (Step == 2)
+        {
+            <div class="section-heading"><h2>Formação completa de custos</h2><p>Os campos seguem a sequência da planilha: valor aduaneiro, tributos, despesas, créditos, operação e venda.</p></div>
+
+            <details class="cost-section" open>
+                <summary><span>1</span><div><strong>Logística internacional</strong><small>Base para FOB, frete, seguro, THC e CIF</small></div></summary>
+                <div class="form-grid costs-grid section-fields">
+                    <Field Label="Modalidade"><select @bind="Form.Calculo.ModalidadeCarga"><option value="@ModalidadeCarga.Lcl">LCL</option><option value="@ModalidadeCarga.Fcl">FCL</option></select></Field>
+                    <Field Label="Peso da carga (kg)"><DecimalInput @bind-Value="Form.Calculo.PesoCargaKg" /></Field>
+                    <Field Label="Frete internacional total (USD)"><DecimalInput @bind-Value="Form.Calculo.FreteInternacionalUsd" /></Field>
+                    <Field Label="Seguro internacional (%)"><DecimalInput @bind-Value="Form.Calculo.SeguroInternacionalPercentual" /></Field>
+                    @if (Form.Calculo.ModalidadeCarga == ModalidadeCarga.Lcl)
+                    {
+                        <Field Label="THC por kg (USD)"><DecimalInput @bind-Value="Form.Calculo.ThcUsdPorKg" /></Field>
+                    }
+                    else
+                    {
+                        <Field Label="Quantidade de contêineres"><DecimalInput @bind-Value="Form.Calculo.QuantidadeContainers" /></Field>
+                        <Field Label="THC por contêiner (USD)"><DecimalInput @bind-Value="Form.Calculo.ThcUsdPorContainer" /></Field>
+                    }
+                    <Field Label="Taxa Siscomex (R$)"><DecimalInput @bind-Value="Form.Calculo.TaxaSiscomexReais" /></Field>
+                </div>
+                <div class="inline-totals"><span>FOB <strong>@Form.FobTotalUsd.ToString("C", Usd)</strong></span><span>THC <strong>@Form.ThcTotalUsd.ToString("C", Usd)</strong></span><span>CIF <strong>@Form.ValorCifReais.ToString("C", Pt)</strong></span></div>
+            </details>
+
+            <details class="cost-section" open>
+                <summary><span>2</span><div><strong>Tributos por item e NCM</strong><small>Bases de importação, venda e créditos aproveitáveis</small></div></summary>
+                <div class="tax-items section-fields">@foreach (var modelo in Form.Modelos.Where(x => x.ItemAdicionado)) { <ImpostosItemEditor Modelo="modelo" /> }</div>
+            </details>
+
+            <details class="cost-section">
+                <summary><span>3</span><div><strong>Despesas aduaneiras</strong><small>Custos em reais do processo de importação</small></div></summary>
+                <div class="form-grid costs-grid section-fields">
+                    <Field Label="Armazenagem - 1º período (R$)"><DecimalInput @bind-Value="Form.Calculo.DespesasAduaneiras.ArmazenagemReais" /></Field>
+                    <Field Label="Despachante (R$)"><DecimalInput @bind-Value="Form.Calculo.DespesasAduaneiras.DespachanteReais" /></Field>
+                    <Field Label="Taxa de câmbio/DI (R$)"><DecimalInput @bind-Value="Form.Calculo.DespesasAduaneiras.TaxaCambioReais" /></Field>
+                    <Field Label="Marinha Mercante - AFRMM (R$)"><DecimalInput @bind-Value="Form.Calculo.DespesasAduaneiras.AfrmmReais" /></Field>
+                    <Field Label="Liberação de BL (R$)"><DecimalInput @bind-Value="Form.Calculo.DespesasAduaneiras.LiberacaoBlReais" /></Field>
+                    <Field Label="Desconsolidação (R$)"><DecimalInput @bind-Value="Form.Calculo.DespesasAduaneiras.DesconsolidacaoReais" /></Field>
+                    <Field Label="ISPS / Drop Off (R$)"><DecimalInput @bind-Value="Form.Calculo.DespesasAduaneiras.IspsDropOffReais" /></Field>
+                    <Field Label="Posicionamento para vistoria (R$)"><DecimalInput @bind-Value="Form.Calculo.DespesasAduaneiras.PosicionamentoContainerReais" /></Field>
+                    <Field Label="Levante de contêiner (R$)"><DecimalInput @bind-Value="Form.Calculo.DespesasAduaneiras.LevanteContainerReais" /></Field>
+                    <Field Label="Pesagem de contêiner (R$)"><DecimalInput @bind-Value="Form.Calculo.DespesasAduaneiras.PesagemContainerReais" /></Field>
+                    <Field Label="Prestação de serviço (R$)"><DecimalInput @bind-Value="Form.Calculo.DespesasAduaneiras.PrestacaoServicoReais" /></Field>
+                    <Field Label="S.D.A. (R$)"><DecimalInput @bind-Value="Form.Calculo.DespesasAduaneiras.SdaReais" /></Field>
+                    <Field Label="Frete porto/armazém (R$)"><DecimalInput @bind-Value="Form.Calculo.DespesasAduaneiras.FretePortoArmazemReais" /></Field>
+                    <Field Label="Outras despesas (R$)"><DecimalInput @bind-Value="Form.DespesasAdicionaisReais" /></Field>
+                </div>
+            </details>
+
+            <details class="cost-section" open>
+                <summary><span>4</span><div><strong>Operação e formação da venda</strong><small>Custos operacional, logístico, financeiro, markup e tributos gerais</small></div></summary>
+                <div class="form-grid costs-grid section-fields">
+                    <Field Label="Custo operacional (%)"><DecimalInput @bind-Value="Form.Calculo.CustoOperacionalPercentual" /></Field>
+                    <Field Label="Custo logístico (%)"><DecimalInput @bind-Value="Form.Calculo.CustoLogisticoPercentual" /></Field>
+                    <Field Label="Custo financeiro (%)"><DecimalInput @bind-Value="Form.Calculo.CustoFinanceiroPercentual" /></Field>
+                    <Field Label="Markup (%)"><DecimalInput @bind-Value="Form.Calculo.MarkupPercentual" /></Field>
+                    <Field Label="IR/CSLL (%)"><DecimalInput @bind-Value="Form.Calculo.IrCsllPercentual" /></Field>
+                    <Field Label="Comissão na origem (%)"><DecimalInput @bind-Value="Form.Calculo.ComissaoOrigemPercentual" /></Field>
+                </div>
+            </details>
+
+            <details class="cost-section">
+                <summary><span>5</span><div><strong>Frete de entrega ao cliente</strong><small>Cubagem, pedágio, ad valorem e ICMS do transporte</small></div></summary>
+                <div class="form-grid costs-grid section-fields">
+                    <Field Label="Cubagem da carga (m³)"><DecimalInput @bind-Value="Form.Calculo.CubagemM3" /></Field>
+                    <Field Label="Valor por m³ (R$)"><DecimalInput @bind-Value="Form.Calculo.ValorFretePorM3Reais" /></Field>
+                    <Field Label="Pedágio (R$)"><DecimalInput @bind-Value="Form.Calculo.PedagioReais" /></Field>
+                    <Field Label="Ad valorem (%)"><DecimalInput @bind-Value="Form.Calculo.AdValoremFretePercentual" /></Field>
+                    <Field Label="ICMS do frete (%)"><DecimalInput @bind-Value="Form.Calculo.IcmsFretePercentual" /></Field>
+                    <label class="switch-field"><input type="checkbox" @bind="Form.Calculo.UsarFreteEntregaManual" /><span>Informar frete total manualmente</span></label>
+                    @if (Form.Calculo.UsarFreteEntregaManual) { <Field Label="Frete total manual (R$)"><DecimalInput @bind-Value="Form.Calculo.FreteEntregaManualReais" /></Field> }
+                </div>
+            </details>
+            <div class="calculation-preview"><ResumoValores Cotacao="Form" /></div>
+        }
+
+        @if (Step == 3)
+        {
+            <div class="section-heading"><h2>Informações do PDF</h2><p>Edite os textos desta proposta. Eles serão usados no PDF Full Beauty ou Full Pharma selecionado.</p></div>
+            <div class="pdf-text-editor">
+                <label for="pdf-prazos">PRAZOS CONSIDERADOS</label>
+                <textarea id="pdf-prazos" rows="4" maxlength="2000" value="@Form.PrazosPdfEfetivos" @oninput="e => Form.PrazosPdf = e.Value?.ToString() ?? string.Empty"></textarea>
+                <small>Estes prazos aparecem junto aos dados de cada produto.</small>
+                <label for="pdf-informacoes">INFORMAÇÕES ADICIONAIS</label>
+                <textarea id="pdf-informacoes" rows="16" maxlength="15000" value="@Form.InformacoesPdfEfetivas" @oninput="e => Form.InformacoesPdf = e.Value?.ToString() ?? string.Empty"></textarea>
+                <small>O padrão acompanha o câmbio e o frete até você editar. Depois da edição, revise os valores no texto se alterar os custos.</small>
+                <button type="button" class="button secondary" @onclick="() => ConfirmarRestauracao = true">Restaurar textos padrão</button>
+                @if (ConfirmarRestauracao)
+                {
+                    <div class="alert">Substituir os textos editados pelos padrões?
+                        <button type="button" class="button secondary" @onclick="RestaurarTextos">Restaurar</button>
+                        <button type="button" class="text-button" @onclick="() => ConfirmarRestauracao = false">Cancelar</button>
+                    </div>
+                }
+            </div>
+        }
+
+        @if (Step == 4)
+        {
+            <div class="section-heading"><h2>Resumo para conferência</h2><p>Os valores abaixo resultam das mesmas bases e vínculos identificados na planilha.</p></div>
+            <ResumoValores Cotacao="Form" />
+            <div class="summary-items"><h3>Fotos dos produtos</h3><p>Anexe uma foto ao lado de cada produto. Ela aparecerá à direita dos dados no PDF.</p>
+                @foreach (var m in Form.Modelos.Where(x => x.ItemAdicionado))
+                {
+                    <section class="product-photo-card" @key="m.Id">
+                        <div><strong>@m.Nome</strong><p>@m.Item.Descricao · NCM @m.Item.Ncm</p><p>@m.Item.Quantidade.ToString("N2") unidade(s)</p><strong>@((m.Item.Quantidade * Form.PrecoUnitarioComTodosImpostos(m.Item)).ToString("C", Pt))</strong></div>
+                        <FotoProdutoEditor Item="m.Item" CarregandoChanged="busy => AtualizarUpload(m.Id, busy)" />
+                    </section>
+                }
+            </div>
+        }
+
+        @if (Step == 5)
+        {
+            <div class="section-heading"><h2>Finalizar</h2><p>A cotação será salva e o PDF poderá ser gerado no modelo escolhido.</p></div>
+            <div class="finish-card"><strong>@(Form.ModeloPdf == ModeloPdf.FullBeauty ? "Full Beauty" : "Full Pharma")</strong><span>@Form.Modelos.Count(x => x.ItemAdicionado) modelo(s) preenchido(s)</span><span>@Form.Calculo.ModalidadeCarga.ToString().ToUpperInvariant() · @Form.PrecoVendaSugeridoReais.ToString("C", Pt)</span></div>
+        }
+
+        <div class="form-actions"><button class="button secondary" disabled="@(Step == 0 || Uploads.Count > 0)" @onclick="() => Step--">← Voltar</button>@if (Step < 5) { <button class="button primary" disabled="@(Uploads.Count > 0)" @onclick="Continuar">Continuar →</button> } else { <button class="button primary" disabled="@(Uploads.Count > 0)" @onclick="Salvar">Salvar Cotação</button> }</div>
+    </div>
+</section>
+
+@code {
+    [Parameter] public Guid? Id { get; set; }
+    private Cotacao Form = new();
+    private int Step;
+    private string Error = "";
+    private string AvisoCambio = "";
+    private bool CarregandoCambio;
+    private bool ConfirmarRestauracao;
+    private readonly HashSet<Guid> Uploads = [];
+    private void AtualizarUpload(Guid id, bool busy) { if (busy) Uploads.Add(id); else Uploads.Remove(id); }
+    private void RestaurarTextos() { Form.PrazosPdf = null; Form.InformacoesPdf = null; ConfirmarRestauracao = false; }
+    private static CultureInfo Pt => CultureInfo.GetCultureInfo("pt-BR");
+    private static CultureInfo Usd => CultureInfo.GetCultureInfo("en-US");
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id.HasValue)
+        {
+            Form = Service.PrepararEdicao(Id.Value) ?? new();
+            return;
+        }
+
+        CarregandoCambio = true;
+        var ptax = await CambioService.ObterUltimaPtaxVendaAsync();
+        CarregandoCambio = false;
+        if (ptax is null)
+        {
+            AvisoCambio = "Não foi possível consultar a PTAX agora. Informe o câmbio manualmente.";
+            return;
+        }
+        Form.Cambio = ptax.ValorVenda;
+        Form.DataReferenciaCambio = ptax.DataReferencia;
+    }
+
+    private void AdicionarModelo() => Form.Modelos.Add(new());
+    private void RemoverModelo(ModeloCotacao modelo) => Form.Modelos.Remove(modelo);
+    private void IrPara(int destino) { if (Uploads.Count > 0) return; if (destino <= Step) { Step = destino; Error = ""; } else Continuar(); }
+    private void Continuar() { Error = Validar(); if (Error == "") Step = Math.Min(5, Step + 1); }
+
+    private string Validar()
+    {
+        if (Step == 0 && (string.IsNullOrWhiteSpace(Form.Cliente) || string.IsNullOrWhiteSpace(Form.Destino) || string.IsNullOrWhiteSpace(Form.Origem) || Form.Cambio <= 0))
+            return "Preencha todos os dados obrigatórios da cotação.";
+        if (Step == 1 && (Form.Modelos.Count == 0 || Form.Modelos.Any(m => string.IsNullOrWhiteSpace(m.Nome) || string.IsNullOrWhiteSpace(m.CodigoFornecedor) || !m.ItemAdicionado || string.IsNullOrWhiteSpace(m.Item.Descricao) || string.IsNullOrWhiteSpace(m.Item.Codigo) || string.IsNullOrWhiteSpace(m.Item.Ncm) || m.Item.Quantidade <= 0 || m.Item.PrecoUnitarioUsd < 0)))
+            return "Cada modelo deve ter nome, código de fornecedor e exatamente um item completo, incluindo NCM, quantidade e preço FOB.";
+        if (Step == 2 && Form.Modelos.Where(x => x.ItemAdicionado).Any(x => Form.FatorMultiplicador(x.Item) <= 0))
+            return "A soma do markup, IR/CSLL, PIS, COFINS e ICMS de venda deve ser menor que 100% em todos os itens.";
+        return "";
+    }
+
+    private async Task Salvar()
+    {
+        for (var etapa = 0; etapa < 3; etapa++)
+        {
+            Step = etapa;
+            var erro = Validar();
+            if (erro != "") { Error = erro; return; }
+        }
+        var auth = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var idTexto = auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        Guid? usuarioId = Guid.TryParse(idTexto, out var id) ? id : null;
+        Form.PrazosPdf ??= Form.PrazosPdfEfetivos;
+        Form.InformacoesPdf ??= Form.InformacoesPdfEfetivas;
+        Service.Salvar(Form, usuarioId);
+        Nav.NavigateTo($"/cotacoes/{Form.Id}/resumo");
+    }
+}

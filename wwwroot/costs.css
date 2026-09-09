@@ -1,0 +1,112 @@
+.exchange-note {
+    min-height: 24px;
+    margin-top: 14px;
+    color: #5d6f88;
+    font-size: 11px;
+}
+
+.pdf-text-editor { display: grid; gap: 12px; }
+.pdf-text-editor label { font-weight: 700; color: #31486a; margin-top: 16px; }
+.pdf-text-editor textarea { width: 100%; box-sizing: border-box; padding: 14px; border: 1px solid #dce4ef; border-radius: 10px; font: inherit; line-height: 1.6; resize: vertical; background: #fbfcfe; }
+.pdf-text-editor small, .photo-actions small { color: #63728a; }
+.pdf-text-editor > button { justify-self: start; }
+.product-photo-card { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 20px; margin-top: 16px; border: 1px solid #dce4ef; border-radius: 14px; }
+.product-photo-card p { color: #63728a; }
+.product-photo-editor { display: flex; align-items: center; gap: 16px; }
+.product-photo-preview { width: 150px; height: 150px; flex-shrink: 0; border: 1px solid #e5eaf2; border-radius: 12px; background: #fff; display: grid; place-items: center; overflow: hidden; }
+.product-photo-preview img { width: 100%; height: 100%; object-fit: contain; padding: 8px; box-sizing: border-box; }
+.product-photo-preview span { font-size: 12px; color: #748198; }
+.photo-actions { display: grid; gap: 10px; max-width: 220px; }
+.photo-upload { position: relative; overflow: hidden; cursor: pointer; }
+.photo-upload input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.photo-upload:focus-within { outline: 2px solid #315b9d; outline-offset: 3px; }
+.photo-error { color: #b42318; font-size: 12px; }
+@media(max-width: 800px) { .product-photo-card, .product-photo-editor { flex-direction: column; align-items: flex-start; } }
+
+.exchange-note.warning { color: #9b6a12; }
+
+.cost-section {
+    margin-top: 14px;
+    border: 1px solid #dce4ef;
+    border-radius: 14px;
+    background: #fbfcfe;
+    overflow: hidden;
+}
+
+.cost-section > summary {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px 17px;
+    list-style: none;
+    cursor: pointer;
+    user-select: none;
+}
+
+.cost-section > summary::-webkit-details-marker { display: none; }
+.cost-section > summary > span {
+    display: grid;
+    place-items: center;
+    width: 27px;
+    height: 27px;
+    border-radius: 8px;
+    color: #fff;
+    background: #315b9d;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.cost-section > summary div { display: grid; gap: 2px; }
+.cost-section > summary strong { font-size: 13px; }
+.cost-section > summary small { color: #748198; font-size: 10px; }
+.cost-section[open] > summary { border-bottom: 1px solid #e5eaf2; background: #f6f9fd; }
+.section-fields { padding: 18px; }
+.subsection-title {
+    margin: 22px 0 12px !important;
+    color: #40516b;
+    font-size: 11px !important;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.subsection-title:first-of-type { margin-top: 0 !important; }
+.credit-options { display: flex; flex-wrap: wrap; gap: 10px 18px; }
+.credit-options label, .switch-field {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #3e4c63;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.credit-options input, .switch-field input { width: 16px; height: 16px; accent-color: #315b9d; }
+.switch-field {
+    align-self: end;
+    min-height: 42px;
+    border: 1px solid #dce4ef;
+    border-radius: 10px;
+    padding: 0 12px;
+    background: #fff;
+}
+
+.inline-totals { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 18px 18px; }
+.inline-totals span {
+    min-width: 155px;
+    border-radius: 10px;
+    padding: 10px 12px;
+    color: #63728a;
+    background: #edf3fb;
+    font-size: 10px;
+}
+
+.inline-totals strong { display: block; margin-top: 3px; color: #263c60; font-size: 12px; }
+.calculation-preview { margin-top: 18px; border: 1px solid #dce4ef; border-radius: 14px; padding: 18px; background: #fff; }
+.summary-list .subtotal { font-weight: 800; }
+.summary-list .credit dd { color: #26784b; }
+
+@media (max-width: 700px) {
+    .cost-section > summary { align-items: flex-start; }
+    .section-fields { padding: 14px; }
+    .inline-totals span { flex: 1; }
+}

@@ -2,6 +2,107 @@
 @attribute [Authorize]
 @rendermode InteractiveServer
 @inject CotacaoService Service
+
 <PageTitle>Resumo da Cotação</PageTitle>
-@if(Cotacao is null){<section class="page-content"><div class="alert error">Cotação não encontrada.</div></section>}else{<section class="page-content summary-page"><div class="quotation-title"><div><span>Cotação</span><h2>#@Cotacao.Numero</h2></div><select class="status-select prominent" @bind="Cotacao.Status" @bind:after="SalvarStatus">@foreach(var status in StatusCotacao.Todos){<option value="@status">@status</option>}</select></div><Steps Current="3"/><div class="summary-layout final-summary"><section class="panel"><div class="section-heading"><h2>Resumo da Cotação</h2><p>Valores calculados no backend C#.</p></div><ResumoValores Cotacao="Cotacao"/></section><section class="panel items-panel"><div class="section-heading"><h2>Modelos da Cotação</h2><p>@Cotacao.Modelos.Count(x=>x.ItemAdicionado) modelo(s)</p></div><div class="table-wrap"><table><thead><tr><th>Modelo / Produto</th><th>NCM</th><th>Qtd.</th><th>Preço unitário</th><th>Total com impostos</th></tr></thead><tbody>@foreach(var m in Cotacao.Modelos.Where(x=>x.ItemAdicionado)){<tr><td><strong>@m.Nome</strong><small>@m.Item.Descricao</small></td><td>@m.Item.Ncm</td><td>@m.Item.Quantidade</td><td>@Cotacao.PrecoUnitarioSemImpostos(m.Item).ToString("C",Pt)</td><td>@((m.Item.Quantidade*Cotacao.PrecoUnitarioComTodosImpostos(m.Item)).ToString("C",Pt))</td></tr>}</tbody></table></div></section></div><div class="summary-actions"><a class="button secondary" href="cotacoes">← Voltar ao menu</a><div><a class="button secondary" href="cotacoes/@Cotacao.Id/editar">✎ Editar cotação</a><a class="button primary" href="api/cotacoes/@Cotacao.Id/pdf" @onclick="MarcarAguardandoCliente">⇩ Gerar PDF @(Cotacao.ModeloPdf==ModeloPdf.FullBeauty?"Full Beauty":"Full Pharma")</a></div></div></section>}
-@code{[Parameter]public Guid Id{get;set;}Cotacao? Cotacao;static CultureInfo Pt=>CultureInfo.GetCultureInfo("pt-BR");protected override void OnParametersSet()=>Cotacao=Service.Obter(Id);void SalvarStatus(){if(Cotacao is not null)Service.AtualizarStatus(Cotacao.Id,Cotacao.Status);}void MarcarAguardandoCliente(){if(Cotacao is null)return;Cotacao.Status=StatusCotacao.AguardandoCliente;Service.AtualizarStatus(Cotacao.Id,Cotacao.Status);}}
+
+@if (Cotacao is null)
+{
+    <section class="page-content">
+        <div class="alert error">Cotação não encontrada.</div>
+    </section>
+}
+else
+{
+    <section class="page-content summary-page">
+        <div class="quotation-title">
+            <div>
+                <span>Cotação</span>
+                <h2>#@Cotacao.Numero</h2>
+            </div>
+            <select class="status-select prominent" @bind="Cotacao.Status" @bind:after="SalvarStatus">
+                @foreach (var status in StatusCotacao.Todos)
+                {
+                    <option value="@status">@status</option>
+                }
+            </select>
+        </div>
+
+        <Steps Current="5" />
+
+        <div class="summary-layout final-summary">
+            <section class="panel">
+                <div class="section-heading">
+                    <h2>Resumo da Cotação</h2>
+                    <p>Valores calculados no backend C#.</p>
+                </div>
+                <ResumoValores Cotacao="Cotacao" />
+            </section>
+
+            <section class="panel items-panel">
+                <div class="section-heading">
+                    <h2>Modelos da Cotação</h2>
+                    <p>@Cotacao.Modelos.Count(x => x.ItemAdicionado) modelo(s)</p>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Modelo / Produto</th>
+                                <th>NCM</th>
+                                <th>Qtd.</th>
+                                <th>Peça sem impostos</th>
+                                <th>Peça com impostos, sem IPI</th>
+                                <th>Peça com todos os impostos</th>
+                                <th>Valor total do pedido</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var modelo in Cotacao.Modelos.Where(x => x.ItemAdicionado))
+                            {
+                                <tr>
+                                    <td>
+                                        <strong>@modelo.Nome</strong>
+                                        <small>@modelo.Item.Descricao</small>
+                                    </td>
+                                    <td>@modelo.Item.Ncm</td>
+                                    <td>@modelo.Item.Quantidade</td>
+                                    <td>@Cotacao.PrecoUnitarioSemImpostos(modelo.Item).ToString("C", Pt)</td>
+                                    <td>@Cotacao.PrecoUnitarioComImpostosSemIpi(modelo.Item).ToString("C", Pt)</td>
+                                    <td>@Cotacao.PrecoUnitarioComTodosImpostos(modelo.Item).ToString("C", Pt)</td>
+                                    <td>@((modelo.Item.Quantidade * Cotacao.PrecoUnitarioComTodosImpostos(modelo.Item)).ToString("C", Pt))</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+        <div class="summary-actions">
+            <a class="button secondary" href="cotacoes">← Voltar ao menu</a>
+            <div>
+                <a class="button secondary" href="cotacoes/@Cotacao.Id/editar">✎ Editar cotação</a>
+                <a class="button primary" href="api/cotacoes/@Cotacao.Id/pdf">
+                    ⇩ Gerar PDF @(Cotacao.ModeloPdf == ModeloPdf.FullBeauty ? "Full Beauty" : "Full Pharma")
+                </a>
+            </div>
+        </div>
+    </section>
+}
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    private Cotacao? Cotacao { get; set; }
+    private static CultureInfo Pt => CultureInfo.GetCultureInfo("pt-BR");
+
+    protected override void OnParametersSet() => Cotacao = Service.Obter(Id);
+
+    private void SalvarStatus()
+    {
+        if (Cotacao is not null)
+            Service.AtualizarStatus(Cotacao.Id, Cotacao.Status);
+    }
+
+}

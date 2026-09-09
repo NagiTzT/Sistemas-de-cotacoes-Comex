@@ -1,0 +1,55 @@
+<div class="product-photo-editor">
+    <div class="product-photo-preview">
+        @if (Item.Foto is { Length: > 0 })
+        {
+            <img src="@($"data:image/jpeg;base64,{Convert.ToBase64String(Item.Foto)}")" alt="Foto de @Item.Descricao" />
+        }
+        else { <span>Foto do produto</span> }
+    </div>
+    <div class="photo-actions">
+        <label class="button secondary photo-upload">
+            @(Carregando ? "Preparando foto..." : Item.Foto is { Length: > 0 } ? "Trocar foto" : "Anexar foto")
+            <InputFile OnChange="Anexar" accept="image/jpeg,image/png,image/webp" disabled="@Carregando" aria-label="@($"Anexar foto de {Item.Descricao}")" />
+        </label>
+        @if (Item.Foto is { Length: > 0 }) { <button type="button" class="text-button danger-text" disabled="@Carregando" @onclick="() => Item.Foto = null">Remover foto</button> }
+        <small>JPG, PNG ou WebP até 10 MB. Foto opcional, ajustada sem cortes no PDF.</small>
+        @if (Erro is not null) { <span class="photo-error" role="alert">@Erro</span> }
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public ItemCotacao Item { get; set; } = default!;
+    [Parameter] public EventCallback<bool> CarregandoChanged { get; set; }
+    private bool Carregando;
+    private string? Erro;
+
+    private async Task Anexar(InputFileChangeEventArgs args)
+    {
+        Erro = null;
+        var arquivo = args.File;
+        if (arquivo.Size > 10 * 1024 * 1024 || !new[] { "image/jpeg", "image/png", "image/webp" }.Contains(arquivo.ContentType))
+        {
+            Erro = "Selecione uma imagem JPG, PNG ou WebP de até 10 MB.";
+            return;
+        }
+        Carregando = true;
+        await CarregandoChanged.InvokeAsync(true);
+        try
+        {
+            var imagem = await arquivo.RequestImageFileAsync("image/jpeg", 1200, 1200);
+            await using var stream = imagem.OpenReadStream(1024 * 1024);
+            using var buffer = new MemoryStream();
+            await stream.CopyToAsync(buffer);
+            var bytes = buffer.ToArray();
+            if (bytes.Length < 3 || bytes[0] != 0xff || bytes[1] != 0xd8 || bytes[2] != 0xff)
+                throw new InvalidDataException();
+            using var validacao = QuestPDF.Infrastructure.Image.FromBinaryData(bytes);
+            Item.Foto = bytes;
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            Erro = "Não foi possível preparar essa imagem. Tente outra foto ou reduza seu tamanho.";
+        }
+        finally { Carregando = false; await CarregandoChanged.InvokeAsync(false); }
+    }
+}

@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text.Json;
 using Cotacoes.Web.Models;
 using Npgsql;
+using NpgsqlTypes;
 
 namespace Cotacoes.Web.Services;
 
@@ -10,7 +11,7 @@ public sealed class CotacaoService
     private readonly object _sync = new();
     private readonly string _arquivo;
     private readonly string? _conexao;
-    private readonly JsonSerializerOptions _json = new() { WriteIndented = true, PropertyNameCaseInsensitive = true };
+    private readonly JsonSerializerOptions _json = new() { WriteIndented = true, PropertyNameCaseInsensitive = true, IgnoreReadOnlyProperties = true };
     private List<Cotacao> _cotacoes;
     private int _sequencia;
 
@@ -53,10 +54,78 @@ public sealed class CotacaoService
         {
             if (string.IsNullOrEmpty(cotacao.Numero)) cotacao.Numero = $"COT-{DateTime.Today:yyyy}-{_sequencia++:D4}";
             cotacao.CriadoPorId ??= criadoPor;
-            if (UsandoSupabase) SalvarNoSupabase(cotacao); else SalvarNoJson(cotacao);
+            if (UsandoSupabase) SalvarNoSupabase(cotacao, criadoPor);
+            else
+            {
+                if (_cotacoes.Any(x => x.Id == cotacao.Id && x.PdfGeradoEmUtc.HasValue))
+                    TransformarEmCopia(cotacao, criadoPor);
+                SalvarNoJson(cotacao);
+            }
             var index = _cotacoes.FindIndex(x => x.Id == cotacao.Id);
             if (index >= 0) _cotacoes[index] = cotacao; else _cotacoes.Add(cotacao);
             return cotacao;
+        }
+    }
+
+    public Cotacao? PrepararEdicao(Guid id)
+    {
+        lock (_sync)
+        {
+            if (UsandoSupabase) _cotacoes = CarregarDoSupabase();
+            var original = _cotacoes.FirstOrDefault(x => x.Id == id);
+            if (original is null) return null;
+            var copia = JsonSerializer.Deserialize<Cotacao>(JsonSerializer.Serialize(original, _json), _json)!;
+            if (original.PdfGeradoEmUtc.HasValue) TransformarEmCopia(copia, null, numerar: false);
+            return copia;
+        }
+    }
+
+    private void TransformarEmCopia(Cotacao cotacao, Guid? criadoPor, bool numerar = true)
+    {
+        cotacao.CotacaoOrigemId = cotacao.Id;
+        cotacao.Id = Guid.NewGuid();
+        cotacao.Numero = numerar ? $"COT-{DateTime.Today:yyyy}-{_sequencia++:D4}" : "";
+        cotacao.PdfGeradoEmUtc = null;
+        cotacao.CriadoPorId = criadoPor;
+        cotacao.Status = StatusCotacao.EmPreenchimento;
+        foreach (var modelo in cotacao.Modelos) modelo.Id = Guid.NewGuid();
+    }
+
+    public (byte[] Conteudo, string Numero)? GerarPdf(Guid id, PdfService pdf)
+    {
+        lock (_sync)
+        {
+            using var conexao = UsandoSupabase ? AbrirConexao() : null;
+            using var transacao = conexao?.BeginTransaction();
+            if (conexao is not null)
+            {
+                using var bloquear = new NpgsqlCommand("select id from public.cot_cotacoes where id = @id for update", conexao, transacao);
+                bloquear.Parameters.AddWithValue("id", id);
+                if (bloquear.ExecuteScalar() is null) return null;
+                _cotacoes = CarregarDoSupabase();
+            }
+            var original = _cotacoes.FirstOrDefault(x => x.Id == id);
+            if (original is null) return null;
+            var copia = JsonSerializer.Deserialize<Cotacao>(JsonSerializer.Serialize(original, _json), _json)!;
+            // Só preserva a emissão depois que o documento foi gerado com sucesso.
+            var conteudo = pdf.Gerar(copia);
+            if (!copia.PdfGeradoEmUtc.HasValue)
+            {
+                copia.PdfGeradoEmUtc = DateTime.UtcNow;
+                copia.Status = StatusCotacao.AguardandoCliente;
+                if (conexao is not null)
+                {
+                    using var atualizar = new NpgsqlCommand("update public.cot_cotacoes set pdf_gerado_em_utc = @data, status = @status where id = @id", conexao, transacao);
+                    atualizar.Parameters.AddWithValue("data", copia.PdfGeradoEmUtc.Value);
+                    atualizar.Parameters.AddWithValue("status", copia.Status);
+                    atualizar.Parameters.AddWithValue("id", id);
+                    atualizar.ExecuteNonQuery();
+                }
+                else SalvarNoJson(copia);
+            }
+            transacao?.Commit();
+            _cotacoes[_cotacoes.FindIndex(x => x.Id == id)] = copia;
+            return (conteudo, copia.Numero);
         }
     }
 
@@ -88,11 +157,13 @@ public sealed class CotacaoService
         const string sql = """
             select c.id, c.numero, c.cliente, c.destino, c.origem, c.data_cotacao, c.cambio,
                    c.modelo_pdf, c.despesas_adicionais_reais, c.margem_percentual, c.status, c.criado_por,
+                   c.data_referencia_cambio, c.calculo_detalhado::text,
                    m.id, m.nome, m.codigo_fornecedor,
                    i.descricao, i.codigo_produto, i.ncm, i.material, i.tamanho, i.especificacao,
                    i.capacidade, i.quantidade, i.preco_unitario_usd,
                    i.imposto_importacao_percentual, i.ipi_percentual, i.pis_percentual,
-                   i.cofins_percentual, i.icms_percentual
+                   i.cofins_percentual, i.icms_percentual, i.impostos_detalhados::text,
+                   c.prazos_pdf, c.informacoes_pdf, i.foto, c.pdf_gerado_em_utc, c.cotacao_origem_id
               from public.cot_cotacoes c
               left join public.cot_modelos m on m.cotacao_id = c.id
               left join public.cot_itens i on i.modelo_id = m.id
@@ -110,6 +181,10 @@ public sealed class CotacaoService
                 {
                     Id = id,
                     Numero = leitor.GetString(1),
+                    PdfGeradoEmUtc = leitor.IsDBNull(35) ? null : leitor.GetDateTime(35),
+                    CotacaoOrigemId = leitor.IsDBNull(36) ? null : leitor.GetGuid(36),
+                    PrazosPdf = leitor.IsDBNull(32) ? null : leitor.GetString(32),
+                    InformacoesPdf = leitor.IsDBNull(33) ? null : leitor.GetString(33),
                     Cliente = leitor.GetString(2),
                     Destino = leitor.GetString(3),
                     Origem = leitor.GetString(4),
@@ -120,41 +195,57 @@ public sealed class CotacaoService
                     MargemPercentual = leitor.GetDecimal(9),
                     Status = leitor.GetString(10),
                     CriadoPorId = leitor.IsDBNull(11) ? null : leitor.GetGuid(11),
+                    DataReferenciaCambio = leitor.IsDBNull(12) ? null : DateOnly.FromDateTime(leitor.GetDateTime(12)),
+                    Calculo = leitor.IsDBNull(13) ? new() : JsonSerializer.Deserialize<CalculoCotacao>(leitor.GetString(13), _json) ?? new(),
                     Modelos = []
                 };
+                if ((leitor.IsDBNull(13) || leitor.GetString(13) == "{}") && cotacao.MargemPercentual != 0)
+                    cotacao.Calculo.MarkupPercentual = cotacao.MargemPercentual;
                 porId[id] = cotacao;
                 resultado.Add(cotacao);
             }
 
-            if (leitor.IsDBNull(12)) continue;
+            if (leitor.IsDBNull(14)) continue;
             var modelo = new ModeloCotacao
             {
-                Id = leitor.GetGuid(12),
-                Nome = leitor.GetString(13),
-                CodigoFornecedor = leitor.GetString(14),
-                ItemAdicionado = !leitor.IsDBNull(15)
+                Id = leitor.GetGuid(14),
+                Nome = leitor.GetString(15),
+                CodigoFornecedor = leitor.GetString(16),
+                ItemAdicionado = !leitor.IsDBNull(17)
             };
             if (modelo.ItemAdicionado)
             {
+                var impostos = new Impostos
+                {
+                    ImpostoImportacaoPercentual = leitor.GetDecimal(26),
+                    IpiPercentual = leitor.GetDecimal(27),
+                    PisPercentual = leitor.GetDecimal(28),
+                    CofinsPercentual = leitor.GetDecimal(29),
+                    IcmsPercentual = leitor.GetDecimal(30),
+                    IpiVendaPercentual = leitor.GetDecimal(27),
+                    PisVendaPercentual = leitor.GetDecimal(28),
+                    CofinsVendaPercentual = leitor.GetDecimal(29),
+                    IcmsVendaPercentual = leitor.GetDecimal(30),
+                    AproveitaCreditoIpi = false,
+                    AproveitaCreditoPis = false,
+                    AproveitaCreditoCofins = false,
+                    AproveitaCreditoIcms = false
+                };
+                if (!leitor.IsDBNull(31) && leitor.GetString(31) != "{}")
+                    impostos = JsonSerializer.Deserialize<Impostos>(leitor.GetString(31), _json) ?? impostos;
                 modelo.Item = new ItemCotacao
                 {
-                    Descricao = leitor.GetString(15),
-                    Codigo = leitor.GetString(16),
-                    Ncm = leitor.GetString(17),
-                    Material = leitor.IsDBNull(18) ? "" : leitor.GetString(18),
-                    Tamanho = leitor.IsDBNull(19) ? "" : leitor.GetString(19),
-                    Especificacao = leitor.IsDBNull(20) ? "" : leitor.GetString(20),
-                    Capacidade = leitor.IsDBNull(21) ? "" : leitor.GetString(21),
-                    Quantidade = leitor.GetDecimal(22),
-                    PrecoUnitarioUsd = leitor.GetDecimal(23),
-                    Impostos = new Impostos
-                    {
-                        ImpostoImportacaoPercentual = leitor.GetDecimal(24),
-                        IpiPercentual = leitor.GetDecimal(25),
-                        PisPercentual = leitor.GetDecimal(26),
-                        CofinsPercentual = leitor.GetDecimal(27),
-                        IcmsPercentual = leitor.GetDecimal(28)
-                    }
+                    Descricao = leitor.GetString(17),
+                    Foto = leitor.IsDBNull(34) ? null : leitor.GetFieldValue<byte[]>(34),
+                    Codigo = leitor.GetString(18),
+                    Ncm = leitor.GetString(19),
+                    Material = leitor.IsDBNull(20) ? "" : leitor.GetString(20),
+                    Tamanho = leitor.IsDBNull(21) ? "" : leitor.GetString(21),
+                    Especificacao = leitor.IsDBNull(22) ? "" : leitor.GetString(22),
+                    Capacidade = leitor.IsDBNull(23) ? "" : leitor.GetString(23),
+                    Quantidade = leitor.GetDecimal(24),
+                    PrecoUnitarioUsd = leitor.GetDecimal(25),
+                    Impostos = impostos
                 };
             }
             cotacao.Modelos.Add(modelo);
@@ -162,28 +253,41 @@ public sealed class CotacaoService
         return resultado;
     }
 
-    private void SalvarNoSupabase(Cotacao cotacao)
+    private void SalvarNoSupabase(Cotacao cotacao, Guid? criadoPor = null)
     {
         using var conexao = AbrirConexao();
         using var transacao = conexao.BeginTransaction();
+        // Protege também formulários abertos antes da emissão e outras instâncias do servidor.
+        using (var bloquear = new NpgsqlCommand("select pdf_gerado_em_utc from public.cot_cotacoes where id = @id for update", conexao, transacao))
+        {
+            bloquear.Parameters.AddWithValue("id", cotacao.Id);
+            var emissao = bloquear.ExecuteScalar();
+            if (emissao is not null && emissao is not DBNull) TransformarEmCopia(cotacao, criadoPor);
+        }
         const string sqlCotacao = """
             insert into public.cot_cotacoes
                 (id, numero, criado_por, cliente, destino, origem, data_cotacao, cambio, modelo_pdf,
-                 despesas_adicionais_reais, margem_percentual, status)
+                 despesas_adicionais_reais, margem_percentual, status, data_referencia_cambio, calculo_detalhado, prazos_pdf, informacoes_pdf, pdf_gerado_em_utc, cotacao_origem_id)
             values
                 (@id, @numero, @criado_por, @cliente, @destino, @origem, @data, @cambio, @modelo_pdf,
-                 @despesas, @margem, @status)
+                 @despesas, @margem, @status, @data_cambio, @calculo, @prazos, @informacoes, @emissao, @origem_id)
             on conflict (id) do update set
                 numero = excluded.numero, criado_por = coalesce(cot_cotacoes.criado_por, excluded.criado_por),
                 cliente = excluded.cliente, destino = excluded.destino,
                 origem = excluded.origem, data_cotacao = excluded.data_cotacao, cambio = excluded.cambio,
                 modelo_pdf = excluded.modelo_pdf, despesas_adicionais_reais = excluded.despesas_adicionais_reais,
-                margem_percentual = excluded.margem_percentual, status = excluded.status
+                margem_percentual = excluded.margem_percentual, status = excluded.status,
+                data_referencia_cambio = excluded.data_referencia_cambio, calculo_detalhado = excluded.calculo_detalhado,
+                prazos_pdf = excluded.prazos_pdf, informacoes_pdf = excluded.informacoes_pdf
             """;
         using (var comando = new NpgsqlCommand(sqlCotacao, conexao, transacao))
         {
             comando.Parameters.AddWithValue("id", cotacao.Id);
             comando.Parameters.AddWithValue("numero", cotacao.Numero);
+            comando.Parameters.Add("emissao", NpgsqlDbType.TimestampTz).Value = (object?)cotacao.PdfGeradoEmUtc ?? DBNull.Value;
+            comando.Parameters.Add("origem_id", NpgsqlDbType.Uuid).Value = (object?)cotacao.CotacaoOrigemId ?? DBNull.Value;
+            comando.Parameters.Add("prazos", NpgsqlDbType.Text).Value = (object?)cotacao.PrazosPdf ?? DBNull.Value;
+            comando.Parameters.Add("informacoes", NpgsqlDbType.Text).Value = (object?)cotacao.InformacoesPdf ?? DBNull.Value;
             comando.Parameters.AddWithValue("criado_por", (object?)cotacao.CriadoPorId ?? DBNull.Value);
             comando.Parameters.AddWithValue("cliente", cotacao.Cliente);
             comando.Parameters.AddWithValue("destino", cotacao.Destino);
@@ -194,6 +298,9 @@ public sealed class CotacaoService
             comando.Parameters.AddWithValue("despesas", cotacao.DespesasAdicionaisReais);
             comando.Parameters.AddWithValue("margem", cotacao.MargemPercentual);
             comando.Parameters.AddWithValue("status", cotacao.Status);
+            comando.Parameters.Add("data_cambio", NpgsqlDbType.Date).Value =
+                (object?)cotacao.DataReferenciaCambio ?? DBNull.Value;
+            comando.Parameters.Add("calculo", NpgsqlDbType.Jsonb).Value = JsonSerializer.Serialize(cotacao.Calculo, _json);
             comando.ExecuteNonQuery();
         }
 
@@ -252,19 +359,20 @@ public sealed class CotacaoService
         _cotacoes = CarregarDoSupabase();
     }
 
-    private static void InserirItem(NpgsqlConnection conexao, NpgsqlTransaction transacao, ModeloCotacao modelo)
+    private void InserirItem(NpgsqlConnection conexao, NpgsqlTransaction transacao, ModeloCotacao modelo)
     {
         const string sql = """
             insert into public.cot_itens
                 (modelo_id, descricao, codigo_produto, ncm, material, tamanho, especificacao, capacidade,
                  quantidade, preco_unitario_usd, imposto_importacao_percentual, ipi_percentual,
-                 pis_percentual, cofins_percentual, icms_percentual)
+                 pis_percentual, cofins_percentual, icms_percentual, impostos_detalhados, foto)
             values
                 (@modelo_id, @descricao, @codigo, @ncm, @material, @tamanho, @especificacao, @capacidade,
-                 @quantidade, @preco, @ii, @ipi, @pis, @cofins, @icms)
+                 @quantidade, @preco, @ii, @ipi, @pis, @cofins, @icms, @impostos, @foto)
             """;
         using var comando = new NpgsqlCommand(sql, conexao, transacao);
         comando.Parameters.AddWithValue("modelo_id", modelo.Id);
+        comando.Parameters.Add("foto", NpgsqlDbType.Bytea).Value = (object?)modelo.Item.Foto ?? DBNull.Value;
         comando.Parameters.AddWithValue("descricao", modelo.Item.Descricao);
         comando.Parameters.AddWithValue("codigo", modelo.Item.Codigo);
         comando.Parameters.AddWithValue("ncm", modelo.Item.Ncm);
@@ -279,6 +387,8 @@ public sealed class CotacaoService
         comando.Parameters.AddWithValue("pis", modelo.Item.Impostos.PisPercentual);
         comando.Parameters.AddWithValue("cofins", modelo.Item.Impostos.CofinsPercentual);
         comando.Parameters.AddWithValue("icms", modelo.Item.Impostos.IcmsPercentual);
+        comando.Parameters.Add("impostos", NpgsqlDbType.Jsonb).Value =
+            JsonSerializer.Serialize(modelo.Item.Impostos, _json);
         comando.ExecuteNonQuery();
     }
 

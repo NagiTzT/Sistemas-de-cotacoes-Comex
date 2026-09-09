@@ -1,2 +1,23 @@
-<dl class="summary-list"><div><dt>FOB Total (USD)</dt><dd>@Cotacao.FobTotalUsd.ToString("C",Usd)</dd></div><div><dt>Valor convertido</dt><dd>@Cotacao.FobTotalReais.ToString("C",Pt)</dd></div><div><dt>Impostos calculados por item/NCM</dt><dd>@Cotacao.TotalImpostosReais.ToString("C",Pt)</dd></div><div><dt>Despesas adicionais</dt><dd>@Cotacao.DespesasAdicionaisReais.ToString("C",Pt)</dd></div><div class="total"><dt>Custo total</dt><dd>@Cotacao.CustoTotalReais.ToString("C",Pt)</dd></div><div class="total"><dt>Preço de venda sugerido</dt><dd>@Cotacao.PrecoVendaSugeridoReais.ToString("C",Pt)</dd></div><div><dt>Margem aplicada sobre o custo total</dt><dd class="positive">@Cotacao.MargemPercentual.ToString("N2")%</dd></div></dl>
-@code{[Parameter,EditorRequired]public Cotacao Cotacao{get;set;}=default!;static CultureInfo Pt=>CultureInfo.GetCultureInfo("pt-BR");static CultureInfo Usd=>CultureInfo.GetCultureInfo("en-US");}
+<dl class="summary-list">
+    <div><dt>Valor FOB</dt><dd>@Cotacao.FobTotalUsd.ToString("C", Usd) · @Cotacao.FobTotalReais.ToString("C", Pt)</dd></div>
+    <div><dt>Frete internacional</dt><dd>@Cotacao.Calculo.FreteInternacionalUsd.ToString("C", Usd) · @Cotacao.FreteInternacionalReais.ToString("C", Pt)</dd></div>
+    <div><dt>Seguro + THC</dt><dd>@((Cotacao.SeguroInternacionalReais + Cotacao.ThcTotalReais).ToString("C", Pt))</dd></div>
+    <div class="subtotal"><dt>Valor CIF</dt><dd>@Cotacao.ValorCifReais.ToString("C", Pt)</dd></div>
+    <div><dt>Tributos da importação, incluindo Siscomex</dt><dd>@Cotacao.TotalTributosImportacaoReais.ToString("C", Pt)</dd></div>
+    <div><dt>Despesas aduaneiras</dt><dd>@Cotacao.TotalDespesasAduaneirasReais.ToString("C", Pt)</dd></div>
+    <div><dt>Nota fiscal de entrada</dt><dd>@Cotacao.ValorNotaFiscalEntradaReais.ToString("C", Pt)</dd></div>
+    <div class="credit"><dt>Créditos de impostos da entrada</dt><dd>- @Cotacao.TotalCreditosImportacaoReais.ToString("C", Pt)</dd></div>
+    <div><dt>Custo operacional e logístico</dt><dd>@Cotacao.CustoOperacionalReais.ToString("C", Pt)</dd></div>
+    <div><dt>Custo financeiro</dt><dd>@Cotacao.CustoFinanceiroReais.ToString("C", Pt)</dd></div>
+    <div class="subtotal"><dt>Custo de entrada líquido</dt><dd>@Cotacao.CustoTotalReais.ToString("C", Pt)</dd></div>
+    <div><dt>Frete de entrega ao cliente</dt><dd>@Cotacao.FreteEntregaClienteReais.ToString("C", Pt)</dd></div>
+    <div class="total"><dt>Valor total da venda</dt><dd>@Cotacao.PrecoVendaSugeridoReais.ToString("C", Pt)</dd></div>
+    <div><dt>Markup informado</dt><dd class="positive">@Cotacao.Calculo.MarkupPercentual.ToString("N2")%</dd></div>
+    <div><dt>Retorno sobre o capital</dt><dd class="positive">@Cotacao.RetornoSobreCapitalPercentual.ToString("N2")%</dd></div>
+</dl>
+
+@code {
+    [Parameter, EditorRequired] public Cotacao Cotacao { get; set; } = default!;
+    private static CultureInfo Pt => CultureInfo.GetCultureInfo("pt-BR");
+    private static CultureInfo Usd => CultureInfo.GetCultureInfo("en-US");
+}

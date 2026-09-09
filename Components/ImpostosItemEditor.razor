@@ -1,12 +1,34 @@
 <section class="tax-item-card">
-    <div class="tax-item-heading"><div><strong>@Modelo.Nome</strong><span>@Modelo.Item.Descricao</span></div><span class="ncm-badge">NCM @Modelo.Item.Ncm</span></div>
+    <div class="tax-item-heading">
+        <div><strong>@Modelo.Nome</strong><span>@Modelo.Item.Descricao</span></div>
+        <span class="ncm-badge">NCM @Modelo.Item.Ncm</span>
+    </div>
+
+    <h3 class="subsection-title">Tributos da importação</h3>
     <div class="form-grid costs-grid">
-        <Field Label="Imposto de Importação (%)"><DecimalInput @bind-Value="Modelo.Item.Impostos.ImpostoImportacaoPercentual" /></Field>
-        <Field Label="IPI (%)"><DecimalInput @bind-Value="Modelo.Item.Impostos.IpiPercentual" /></Field>
-        <Field Label="PIS (%)"><DecimalInput @bind-Value="Modelo.Item.Impostos.PisPercentual" /></Field>
-        <Field Label="COFINS (%)"><DecimalInput @bind-Value="Modelo.Item.Impostos.CofinsPercentual" /></Field>
-        <Field Label="ICMS (%)"><DecimalInput @bind-Value="Modelo.Item.Impostos.IcmsPercentual" /></Field>
-        <div class="tax-total"><span>Total de alíquotas</span><strong>@Modelo.Item.Impostos.TotalPercentual.ToString("N2")%</strong></div>
+        <Field Label="Imposto de Importação - II (%)"><DecimalInput @bind-Value="Modelo.Item.Impostos.ImpostoImportacaoPercentual" /></Field>
+        <Field Label="IPI na importação (%)"><DecimalInput @bind-Value="Modelo.Item.Impostos.IpiPercentual" /></Field>
+        <Field Label="PIS na importação (%)"><DecimalInput @bind-Value="Modelo.Item.Impostos.PisPercentual" /></Field>
+        <Field Label="COFINS na importação (%)"><DecimalInput @bind-Value="Modelo.Item.Impostos.CofinsPercentual" /></Field>
+        <Field Label="ICMS na importação (%)"><DecimalInput @bind-Value="Modelo.Item.Impostos.IcmsPercentual" /></Field>
+        <div class="tax-total"><span>Alíquotas informadas</span><strong>@Modelo.Item.Impostos.TotalPercentual.ToString("N2")%</strong></div>
+    </div>
+
+    <h3 class="subsection-title">Tributos da venda</h3>
+    <div class="form-grid costs-grid">
+        <Field Label="IPI na venda (%)"><DecimalInput @bind-Value="Modelo.Item.Impostos.IpiVendaPercentual" /></Field>
+        <Field Label="PIS na venda (%)"><DecimalInput @bind-Value="Modelo.Item.Impostos.PisVendaPercentual" /></Field>
+        <Field Label="COFINS na venda (%)"><DecimalInput @bind-Value="Modelo.Item.Impostos.CofinsVendaPercentual" /></Field>
+        <Field Label="ICMS na venda (%)"><DecimalInput @bind-Value="Modelo.Item.Impostos.IcmsVendaPercentual" /></Field>
+        <div class="tax-total"><span>Venda sem IPI</span><strong>@Modelo.Item.Impostos.TotalVendaSemIpiPercentual.ToString("N2")%</strong></div>
+    </div>
+
+    <h3 class="subsection-title">Créditos aproveitáveis na entrada</h3>
+    <div class="credit-options">
+        <label><input type="checkbox" @bind="Modelo.Item.Impostos.AproveitaCreditoIpi" /> Crédito de IPI</label>
+        <label><input type="checkbox" @bind="Modelo.Item.Impostos.AproveitaCreditoPis" /> Crédito de PIS</label>
+        <label><input type="checkbox" @bind="Modelo.Item.Impostos.AproveitaCreditoCofins" /> Crédito de COFINS</label>
+        <label><input type="checkbox" @bind="Modelo.Item.Impostos.AproveitaCreditoIcms" /> Crédito de ICMS</label>
     </div>
 </section>
 

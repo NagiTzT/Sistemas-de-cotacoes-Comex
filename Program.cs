@@ -39,6 +39,7 @@ builder.Services.AddSingleton(sp =>
 builder.Services.AddSingleton<CotacaoService>();
 builder.Services.AddSingleton<PdfService>();
 builder.Services.AddSingleton<UsuarioService>();
+builder.Services.AddSingleton<CambioService>();
 QuestPDF.Settings.License = LicenseType.Community;
 
 var app = builder.Build();
@@ -99,10 +100,9 @@ app.MapRazorComponents<App>()
 
 app.MapGet("/api/cotacoes/{id:guid}/pdf", (Guid id, CotacaoService service, PdfService pdf) =>
 {
-    var cotacao = service.Obter(id);
-    if (cotacao is null) return Results.NotFound();
-    service.AtualizarStatus(id, StatusCotacao.AguardandoCliente);
-    return Results.File(pdf.Gerar(cotacao), "application/pdf", $"cotacao-{cotacao.Numero}.pdf");
+    var documento = service.GerarPdf(id, pdf);
+    if (documento is null) return Results.NotFound();
+    return Results.File(documento.Value.Conteudo, "application/pdf", $"cotacao-{documento.Value.Numero}.pdf");
 }).RequireAuthorization();
 
 _ = app.Services.GetRequiredService<CotacaoService>();

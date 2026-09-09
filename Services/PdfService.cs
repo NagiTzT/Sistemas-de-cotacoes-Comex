@@ -9,7 +9,7 @@ public sealed class PdfService
 {
     public byte[] Gerar(Cotacao cotacao) => Document.Create(document =>
     {
-        foreach (var grupo in cotacao.Modelos.Chunk(2))
+        foreach (var grupo in cotacao.Modelos.Where(x => x.ItemAdicionado).Chunk(2))
             document.Page(page => MontarPagina(page, cotacao, grupo));
         document.Page(page => MontarInformacoes(page, cotacao));
     }).GeneratePdf();
@@ -31,8 +31,7 @@ public sealed class PdfService
             c.Item().Text($"Aos cuidados de {cotacao.Cliente},");
             c.Item().Text(cotacao.DataCotacao.ToDateTime(TimeOnly.MinValue).ToString("dddd, dd 'de' MMMM 'de' yyyy", new System.Globalization.CultureInfo("pt-BR")));
             c.Item().PaddingBottom(14).Text("Detalhes do Produto").Bold();
-            var numero = 1;
-            foreach (var modelo in modelos.Where(x => x.ItemAdicionado)) { c.Item().Element(x => Modelo(x, cotacao, modelo, numero++, pharma)); }
+            foreach (var modelo in modelos) { c.Item().EnsureSpace(240).Element(x => Modelo(x, cotacao, modelo, cotacao.Modelos.IndexOf(modelo) + 1, pharma)); }
         });
         page.Footer().AlignCenter().Text(x => { x.Span("Fullbrands • Proposta "); x.CurrentPageNumber(); });
     }
@@ -41,12 +40,21 @@ public sealed class PdfService
     {
         root.PaddingBottom(18).Column(c =>
         {
-            c.Item().Border(1).BorderColor("#B9B9B9").Column(info =>
+            c.Item().Row(row =>
             {
-                info.Item().Background("#D8D8D8").AlignCenter().Text(string.IsNullOrWhiteSpace(modelo.Nome) ? $"MODELO {numero}" : modelo.Nome.ToUpperInvariant()).Bold();
-                info.Item().Padding(2).Text($"PRODUTO: {modelo.Item.Descricao}\nCÓDIGO: {modelo.Item.Codigo}\nNCM: {modelo.Item.Ncm}");
-                info.Item().Background("#D8D8D8").AlignCenter().Text("PRAZOS CONSIDERADOS").Bold();
-                info.Item().Padding(2).Text($"LEAD TIME PRODUÇÃO: {(pharma ? "30 - 60" : "60")} dias\nLEAD TIME TRANSPORTE MARÍTIMO: 60 dias");
+                row.Spacing(14);
+                row.RelativeItem().Border(1).BorderColor("#B9B9B9").Column(info =>
+                {
+                    info.Item().Background("#D8D8D8").Padding(5).Text(string.IsNullOrWhiteSpace(modelo.Nome) ? $"MODELO {numero}" : modelo.Nome.ToUpperInvariant()).Bold();
+                    info.Item().Padding(7).Text($"PRODUTO: {modelo.Item.Descricao}\nCÓDIGO: {modelo.Item.Codigo}\nNCM: {modelo.Item.Ncm}").LineHeight(1.4f);
+                    if (!string.IsNullOrWhiteSpace(cotacao.PrazosPdfEfetivos))
+                    {
+                        info.Item().Background("#D8D8D8").Padding(5).Text("PRAZOS CONSIDERADOS").Bold();
+                        info.Item().Padding(7).Text(cotacao.PrazosPdfEfetivos).LineHeight(1.4f);
+                    }
+                });
+                if (modelo.Item.Foto is { Length: > 0 })
+                    row.ConstantItem(150).Height(140).Border(1).BorderColor("#E5E7EB").Padding(8).AlignCenter().AlignMiddle().Image(modelo.Item.Foto).FitArea();
             });
             c.Item().PaddingTop(8).Table(t =>
             {
@@ -69,12 +77,12 @@ public sealed class PdfService
         page.Header().Background(cor).Padding(8).AlignCenter().Text(pharma ? "FULLPHARMA" : "FULLBEAUTY").FontSize(22).Bold().FontColor(Colors.White);
         page.Content().PaddingTop(28).Column(c =>
         {
-            c.Spacing(14); c.Item().Text("INFORMAÇÕES ADICIONAIS").FontSize(13).Bold().FontColor(cor);
-            c.Item().Text("Os valores apresentados já incluem os custos de câmbio e frete internacional, considerando o cenário atual de mercado. Poderão ocorrer ajustes em caso de variações cambiais, fiscais ou logísticas significativas.");
-            c.Item().Text($"• Câmbio considerado para elaboração da proposta: R$ {cotacao.Cambio:N2}\n• Lead time conforme indicado em cada modelo.\n• O cronograma de produção será iniciado após a aprovação do projeto e confirmação do pagamento do sinal.");
-            c.Item().Text("Prazo de pagamento: 50% no pedido e 50% no desembaraço, ou por negociação via FIDC, conforme análise e aprovação prévia.");
-            c.Item().Text("O valor do ICMS e do ICMS-ST, quando aplicável, não está incluído na proposta e será de responsabilidade do cliente, conforme legislação vigente e regime tributário adotado.");
-            c.Item().Text("Esta proposta comercial tem validade de 7 (sete) dias corridos a contar da data de emissão.");
+            c.Spacing(14);
+            if (!string.IsNullOrWhiteSpace(cotacao.InformacoesPdfEfetivas))
+            {
+                c.Item().Text("INFORMAÇÕES ADICIONAIS").FontSize(13).Bold().FontColor(cor);
+                c.Item().Border(1).BorderColor("#D1D5DB").Padding(14).Text(cotacao.InformacoesPdfEfetivas).LineHeight(1.35f);
+            }
             c.Item().PaddingTop(30).Row(r => { r.RelativeItem().Text("Assinatura de aceite: __________________________"); r.RelativeItem().Text("Data: ____/____/________"); });
         });
     }
